@@ -2,16 +2,19 @@ import { useEffect, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { interpolate, Easing } from 'remotion'
 import { Vector3 } from 'three'
-import { Laptop } from './Laptop'
+import { Laptop, type LeaderboardEntry } from './Laptop'
 import { Desk } from './Desk'
 import { Plant } from './Plant'
+import { playBootSound } from './bootAudio'
 
 type Props = {
   onStartGame: () => void
-  onShowLeaderboard: () => void
+  leaderboard: LeaderboardEntry[]
   musicOn: boolean
   onToggleMusic: () => void
 }
+
+type Phase = 'off' | 'zooming' | 'menu'
 
 const ZOOM_DURATION_FRAMES = 90
 const FPS = 60
@@ -19,15 +22,19 @@ const FPS = 60
 const IDLE_CAM_POS = new Vector3(2.4, 1.3, 2.8)
 const IDLE_CAM_TARGET = new Vector3(0, 0.45, -0.2)
 
-const ZOOMED_CAM_POS = new Vector3(0, 0.68, -0.03)
+// Land at a "sitting in front of the laptop" distance — far enough back
+// that the entire screen + menu UI fits in the viewport.
+const ZOOMED_CAM_POS = new Vector3(0, 0.9, 0.58)
 const ZOOMED_CAM_TARGET = new Vector3(0, 0.49, -0.55)
 
 function CameraRig ({
   zoomFrame,
   isZooming,
+  isAtMenu,
 }: {
   zoomFrame: number
   isZooming: boolean
+  isAtMenu: boolean
 }) {
   const { camera } = useThree()
   const targetRef = useRef(new Vector3())
@@ -35,13 +42,16 @@ function CameraRig ({
   useFrame((state) => {
     const t = state.clock.elapsedTime
 
-    const progress = isZooming
-      ? interpolate(zoomFrame, [0, ZOOM_DURATION_FRAMES], [0, 1], {
-          extrapolateLeft: 'clamp',
-          extrapolateRight: 'clamp',
-          easing: Easing.bezier(0.65, 0, 0.35, 1),
-        })
-      : 0
+    let progress = 0
+    if (isAtMenu) {
+      progress = 1
+    } else if (isZooming) {
+      progress = interpolate(zoomFrame, [0, ZOOM_DURATION_FRAMES], [0, 1], {
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+        easing: Easing.bezier(0.65, 0, 0.35, 1),
+      })
+    }
 
     const swayX = Math.sin(t * 0.35) * 0.12 * (1 - progress)
     const swayY = Math.sin(t * 0.25) * 0.06 * (1 - progress)
@@ -54,7 +64,7 @@ function CameraRig ({
     targetRef.current.lerpVectors(IDLE_CAM_TARGET, ZOOMED_CAM_TARGET, progress)
     camera.lookAt(targetRef.current)
 
-    const fov = interpolate(progress, [0, 1], [50, 28])
+    const fov = interpolate(progress, [0, 1], [50, 42])
     if ('fov' in camera) {
       camera.fov = fov
       camera.updateProjectionMatrix()
@@ -64,15 +74,17 @@ function CameraRig ({
   return null
 }
 
-export function MenuScene ({ onStartGame, onShowLeaderboard, musicOn, onToggleMusic }: Props) {
+export function MenuScene ({ onStartGame, leaderboard, musicOn, onToggleMusic }: Props) {
+  const [phase, setPhase] = useState<Phase>('off')
   const [zoomFrame, setZoomFrame] = useState(0)
-  const [isZooming, setIsZooming] = useState(false)
+  const [startTransition, setStartTransition] = useState(false)
   const rafRef = useRef<number | null>(null)
   const startTimeRef = useRef<number>(0)
 
-  const triggerStart = () => {
-    if (isZooming) return
-    setIsZooming(true)
+  const handlePowerOn = () => {
+    if (phase !== 'off') return
+    playBootSound()
+    setPhase('zooming')
     startTimeRef.current = performance.now()
 
     const tick = () => {
@@ -82,12 +94,17 @@ export function MenuScene ({ onStartGame, onShowLeaderboard, musicOn, onToggleMu
 
       if (frame >= ZOOM_DURATION_FRAMES) {
         if (rafRef.current) cancelAnimationFrame(rafRef.current)
-        window.setTimeout(() => onStartGame(), 150)
+        setPhase('menu')
         return
       }
       rafRef.current = requestAnimationFrame(tick)
     }
     rafRef.current = requestAnimationFrame(tick)
+  }
+
+  const handleStartGame = () => {
+    setStartTransition(true)
+    window.setTimeout(() => onStartGame(), 600)
   }
 
   useEffect(() => {
@@ -121,17 +138,23 @@ export function MenuScene ({ onStartGame, onShowLeaderboard, musicOn, onToggleMu
         />
         <pointLight position={[0, 0.8, 0.5]} intensity={0.25} color="#dbeafe" distance={2.5} />
 
-        <CameraRig zoomFrame={zoomFrame} isZooming={isZooming} />
+        <CameraRig
+          zoomFrame={zoomFrame}
+          isZooming={phase === 'zooming'}
+          isAtMenu={phase === 'menu'}
+        />
 
         <group position={[0, -0.05, 0]}>
           <Desk />
           <Laptop
             position={[0, 0.03, 0.05]}
-            onStartGame={triggerStart}
-            onShowLeaderboard={onShowLeaderboard}
+            phase={phase}
+            startTransition={startTransition}
+            leaderboard={leaderboard}
+            onPowerOn={handlePowerOn}
+            onStartGame={handleStartGame}
             musicOn={musicOn}
             onToggleMusic={onToggleMusic}
-            fading={isZooming}
           />
           <Plant position={[1.2, 0, -0.2]} />
         </group>
