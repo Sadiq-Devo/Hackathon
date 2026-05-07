@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { emailTemplates, type Email, type EmailType } from './data/emailTemplates'
 import { employees, type Employee } from './data/employees'
 import { generateAiEmail, pickFallbackEmail } from './services/aiEmailGenerator'
+import { MenuScene } from './menu/MenuScene'
 import './App.css'
 import backgroundMusic from './assets/audio/BackgroundMusic.mp3'
 import correctSound from './assets/audio/Correct.mp3'
@@ -13,6 +14,7 @@ import mouseClickSound from './assets/audio/Mouseclick.mp3'
 import popSound from './assets/audio/Pop.mp3'
 import streakEffectSound from './assets/audio/Streakeffect.mp3'
 import streakOhYeahSound from './assets/audio/Streakohyeah.mp3'
+import notificationSound from './assets/audio/Notification.mp3'
 import fishGif from './assets/effects/Fish.gif'
 import heartEmpty from './assets/effects/heart_empty.png'
 import heartFull from './assets/effects/heart_full.png'
@@ -33,7 +35,7 @@ import streak3 from './assets/effects/Streak3.png'
 import streak4 from './assets/effects/Streak4.png'
 import streak5 from './assets/effects/Streak5.png'
 
-type Screen = 'intro' | 'start' | 'game' | 'hacked' | 'end'
+type Screen = 'start' | 'game' | 'hacked' | 'end'
 type Folder = 'inbox' | 'trash' | 'org'
 
 type ActivePopup = {
@@ -103,29 +105,9 @@ const replyTemplates = [
   'Sounds good, thanks for the message.',
 ]
 
-const slides = [
-  {
-    title: 'Phishing kan drabba vem som helst',
-    text: 'Phishing är en av de vanligaste attackmetoderna online. Ett enda felklick kan leda till stulna lösenord, förlorade pengar eller kapade konton.',
-  },
-  {
-    title: 'Titta på detaljerna',
-    text: 'Kontrollera alltid avsändare, länkar, bilagor och språk. Stress, hot och ovanliga domäner är ofta varningssignaler.',
-  },
-  {
-    title: 'Hovra över länkar',
-    text: 'En länk kan visa en text och leda någon helt annanstans. Hovra över länken för att se den verkliga adressen innan du klickar.',
-  },
-  {
-    title: 'Träna som en Phish Fighter',
-    text: 'Svara på legitima mejl, rapportera eller radera phishing. Du har tre hjärtan innan systemet blir hackat.',
-  },
-]
-
 function App () {
   const gameMusicRef = useRef<HTMLAudioElement | null>(null)
-  const [screen, setScreen] = useState<Screen>('intro')
-  const [slideIndex, setSlideIndex] = useState(0)
+  const [screen, setScreen] = useState<Screen>('start')
   const [emails, setEmails] = useState<Email[]>(() => createInbox())
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [score, setScore] = useState(0)
@@ -148,10 +130,12 @@ function App () {
   const [leaderboard, setLeaderboard] = useState<{ name: string; score: number }[]>(
     () => JSON.parse(localStorage.getItem('leaderboard') ?? '[]')
   )
+  const [musicOn, setMusicOn] = useState(false)
+  const [showMenuLeaderboard, setShowMenuLeaderboard] = useState(false)
+  const musicRef = useRef<HTMLAudioElement | null>(null)
 
   const selectedEmail = emails.find((email) => email.id === selectedId) ?? null
   const completedCount = emails.filter((email) => email.done).length
-  const currentSlide = slides[slideIndex]
   const heartsRemaining = Math.max(0, maxHearts - mistakes)
   const scoreProgress = Math.min(100, Math.round((score / SCORE_BAR_TARGET) * 100))
 
@@ -292,6 +276,22 @@ function App () {
     }
   }, [screen])
 
+  useEffect(() => {
+    if (musicOn) {
+      if (!musicRef.current) {
+        const audio = new Audio(notificationSound)
+        audio.loop = true
+        audio.volume = 0.25
+        musicRef.current = audio
+      }
+      void musicRef.current.play().catch(() => {})
+    } else if (musicRef.current) {
+      musicRef.current.pause()
+    }
+  }, [musicOn])
+
+  const toggleMusic = () => setMusicOn((current) => !current)
+
   const startGame = () => {
     setEmails(createInbox())
     setScreen('game')
@@ -419,15 +419,6 @@ function App () {
     setScoreSaved(true)
   }
 
-  const nextSlide = () => {
-    if (slideIndex === slides.length - 1) {
-      setScreen('start')
-      return
-    }
-
-    setSlideIndex((current) => current + 1)
-  }
-
   const renderBodyWithLink = (email: Email) => {
     if (!email.link) {
       return <p>{email.body}</p>
@@ -453,59 +444,61 @@ function App () {
 
   return (
     <>
-      {screen === 'intro' && (
-        <section id="intro-screen" className="screen active">
-          <div className="intro-card">
-            <p className="slide-counter">Slide <span>{slideIndex + 1}</span> / {slides.length}</p>
-            <h1>{currentSlide.title}</h1>
-            <p>{currentSlide.text}</p>
-
-            <div className="slide-dots" aria-label="Intro progress">
-              {slides.map((slide) => (
-                <span
-                  className={`dot ${slide.title === currentSlide.title ? 'active-dot' : ''}`}
-                  key={slide.title}
-                />
-              ))}
-            </div>
-
-            <div className="slide-buttons">
-              <button id="prev-slide-btn" disabled={slideIndex === 0} onClick={() => setSlideIndex((current) => current - 1)}>
-                Back
-              </button>
-              <button id="next-slide-btn" onClick={nextSlide}>
-                {slideIndex === slides.length - 1 ? 'Continue' : 'Next'}
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
-
       {screen === 'start' && (
-        <section id="start-screen" className="screen active">
-          <div className="start-card">
-            <h1>Phish Fighter</h1>
-            <p>
-              Du sitter på kontoret och måste hantera inkommande mejl. Ditt jobb är att skilja
-              legitima mejl från phishing.
-            </p>
+        <section id="start-screen" className="screen active menu-3d-screen">
+          <MenuScene
+            onStartGame={startGame}
+            onShowLeaderboard={() => setShowMenuLeaderboard(true)}
+            musicOn={musicOn}
+            onToggleMusic={toggleMusic}
+          />
 
-            <div className="instructions">
-              <p><strong>Så spelar du:</strong></p>
-              <p>1. Klicka på ett mejl i inkorgen för att öppna det.</p>
-              <p>2. Hovra över länkar för att se den verkliga adressen.</p>
-              <p>3. Tror du mejlet är legitimt? Klicka <strong>Reply</strong> och svara.</p>
-              <p>4. Tror du mejlet är phishing? Klicka <strong>Report</strong> eller <strong>Delete</strong>.</p>
-              <p>5. Du har 3 hjärtan. Varje fel tar ett hjärta, och vid 3 fel blir systemet "hackat".</p>
+          {showMenuLeaderboard && (
+            <div className="menu-leaderboard-overlay" onClick={() => setShowMenuLeaderboard(false)}>
+              <div className="menu-leaderboard-modal" onClick={(e) => e.stopPropagation()}>
+                <button
+                  className="menu-leaderboard-close"
+                  onClick={() => setShowMenuLeaderboard(false)}
+                  type="button"
+                >
+                  ×
+                </button>
+                <h2>Leaderboard</h2>
+                {leaderboard.length === 0 ? (
+                  <p className="menu-leaderboard-empty">No scores yet. Be the first.</p>
+                ) : (
+                  <div className="leaderboard-list">
+                    {[...leaderboard]
+                      .sort((a, b) => b.score - a.score)
+                      .slice(0, 10)
+                      .map((player, index) => (
+                        <div className={`leaderboard-row ${index < 3 ? `top-${index + 1}` : ''}`} key={index}>
+                          <span className="lb-rank">
+                            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                          </span>
+                          <span className="lb-name">{player.name}</span>
+                          <span className="lb-score">{player.score}</span>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
             </div>
-
-            <button id="start-btn" onClick={startGame}>Start Game</button>
-          </div>
+          )}
         </section>
       )}
 
       {screen === 'game' && (
-        <section id="game-screen" className={`screen active ${mistakes >= 1 ? 'infection-level-1' : ''} ${mistakes >= 2 ? 'infection-level-2' : ''}`}>
+        <section id="game-screen" className={`screen active laptop-pov ${mistakes >= 1 ? 'infection-level-1' : ''} ${mistakes >= 2 ? 'infection-level-2' : ''}`}>
+          <div className="laptop-bezel" aria-hidden="true">
+            <div className="laptop-bezel-top" />
+            <div className="laptop-bezel-left" />
+            <div className="laptop-bezel-right" />
+            <div className="laptop-bezel-bottom">
+              <div className="laptop-bezel-hinge" />
+            </div>
+            <div className="laptop-bezel-cam" />
+          </div>
           <div className="gmail-layout">
             <header className="gmail-topbar">
               <div className="gmail-brand">

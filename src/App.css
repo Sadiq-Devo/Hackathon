@@ -3266,3 +3266,546 @@ button:disabled {
     font-size: 22px;
   }
 }
+
+/* ============================================================
+   3D Menu Scene (Three.js + Remotion)
+   ============================================================ */
+
+.menu-3d-screen {
+  padding: 0 !important;
+  overflow: hidden;
+  position: relative;
+  background: #f5f1e8;
+  height: 100vh;
+}
+
+.menu-scene-root {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+}
+
+.menu-scene-root canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.menu-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 60px 80px;
+  z-index: 10;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.menu-overlay-fading {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none !important;
+}
+
+.menu-title-block {
+  text-align: left;
+  pointer-events: none;
+}
+
+.menu-title {
+  font-size: 72px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #4338ca 50%, #6d28d9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+  animation: menuTitleGlow 4s ease-in-out infinite;
+}
+
+@keyframes menuTitleGlow {
+  0%, 100% { filter: drop-shadow(0 6px 14px rgba(30, 58, 138, 0.25)); }
+  50% { filter: drop-shadow(0 6px 18px rgba(109, 40, 217, 0.3)); }
+}
+
+.menu-subtitle {
+  font-size: 18px;
+  color: #475569;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+  pointer-events: auto;
+}
+
+.menu-btn {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 280px;
+  padding: 16px 28px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(30, 58, 138, 0.18);
+  border-radius: 4px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: left;
+  box-shadow: 0 4px 16px rgba(30, 58, 138, 0.08);
+}
+
+.menu-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(67, 56, 202, 0.5);
+  transform: translateX(8px);
+  box-shadow: 0 8px 28px rgba(67, 56, 202, 0.2);
+}
+
+.menu-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menu-btn-primary {
+  background: linear-gradient(135deg, #4338ca, #6d28d9);
+  color: #ffffff;
+  border-color: transparent;
+  font-size: 20px;
+  box-shadow: 0 8px 24px rgba(67, 56, 202, 0.3);
+}
+
+.menu-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3730a3, #5b21b6);
+  box-shadow: 0 10px 32px rgba(67, 56, 202, 0.45);
+  color: #ffffff;
+}
+
+.menu-btn-icon {
+  font-size: 22px;
+  width: 28px;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.menu-footer {
+  text-align: right;
+  color: #94a3b8;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.menu-hint {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #64748b;
+  font-size: 12px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  pointer-events: none;
+  opacity: 0.65;
+  z-index: 12;
+}
+
+/* Leaderboard modal in menu */
+.menu-leaderboard-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.menu-leaderboard-modal {
+  position: relative;
+  background: linear-gradient(160deg, #0f172a, #1e293b);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 8px;
+  padding: 36px 40px 28px;
+  min-width: 420px;
+  max-width: 520px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 50px rgba(56, 189, 248, 0.15);
+}
+
+.menu-leaderboard-modal h2 {
+  color: #38bdf8;
+  margin-bottom: 24px;
+  font-size: 28px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.menu-leaderboard-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 28px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.menu-leaderboard-close:hover {
+  color: #f5f5f5;
+}
+
+.menu-leaderboard-empty {
+  color: #94a3b8;
+  text-align: center;
+  padding: 24px 0;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .menu-overlay {
+    padding: 40px 28px;
+  }
+  .menu-title {
+    font-size: 48px;
+    letter-spacing: 2px;
+  }
+  .menu-btn {
+    min-width: 240px;
+    font-size: 16px;
+  }
+  .menu-leaderboard-modal {
+    min-width: unset;
+    width: 90%;
+  }
+}
+
+/* ============================================================
+   Laptop Bezel Overlay (POV during gameplay)
+   ============================================================ */
+
+.laptop-pov {
+  position: relative;
+}
+
+.laptop-bezel {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  animation: bezelFadeIn 0.4s ease;
+}
+
+@keyframes bezelFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.laptop-bezel-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  background: linear-gradient(to bottom, #18181b 0%, #27272a 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) inset;
+}
+
+.laptop-bezel-cam {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0a0a0a;
+  border: 2px solid #1f1f23;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6) inset;
+}
+
+.laptop-bezel-cam::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(120, 200, 255, 0.4);
+}
+
+.laptop-bezel-left,
+.laptop-bezel-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  background: linear-gradient(to right, #18181b, #27272a);
+  border-right: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.laptop-bezel-left {
+  left: 0;
+}
+
+.laptop-bezel-right {
+  right: 0;
+  background: linear-gradient(to left, #18181b, #27272a);
+  border-right: none;
+  border-left: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.laptop-bezel-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 38px;
+  background: linear-gradient(to top, #0a0a0a 0%, #27272a 100%);
+  border-top: 1px solid rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.laptop-bezel-hinge {
+  width: 220px;
+  height: 4px;
+  background: linear-gradient(to right, transparent, #3f3f46 20%, #52525b 50%, #3f3f46 80%, transparent);
+  border-radius: 2px;
+  margin-bottom: 6px;
+}
+
+/* Screen-edge corner darkening (subtle vignette inside the bezel) */
+.laptop-pov::after {
+  content: '';
+  position: fixed;
+  inset: 28px 18px 38px 18px;
+  pointer-events: none;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.3) inset;
+  border-radius: 2px;
+  z-index: 9998;
+}
+
+/* The game UI must respect the bezel — push content in */
+.laptop-pov > section:not(.laptop-bezel),
+.laptop-pov .gmail-layout {
+  padding-top: 28px !important;
+  padding-bottom: 38px !important;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+
+@media (max-width: 768px) {
+  .laptop-bezel-top { height: 18px; }
+  .laptop-bezel-bottom { height: 24px; }
+  .laptop-bezel-left, .laptop-bezel-right { width: 10px; }
+  .laptop-bezel-hinge { width: 120px; }
+  .laptop-pov::after { inset: 18px 10px 24px 10px; }
+  .laptop-pov > section:not(.laptop-bezel),
+  .laptop-pov .gmail-layout {
+    padding-top: 18px !important;
+    padding-bottom: 24px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
+
+/* ============================================================
+   In-laptop menu UI (rendered inside the 3D laptop screen)
+   ============================================================ */
+
+.laptop-menu {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(160deg, #f8fafc 0%, #e0e7ff 100%);
+  border-radius: 4px;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #1e293b;
+  transition: opacity 0.5s ease, filter 0.5s ease;
+}
+
+.laptop-menu-fading {
+  opacity: 0;
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.laptop-menu-topbar {
+  height: 36px;
+  background: #f1f5f9;
+  border-bottom: 1px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.laptop-menu-dots {
+  display: flex;
+  gap: 7px;
+}
+
+.laptop-menu-dots span {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+.laptop-menu-dots span:nth-child(2) {
+  background: #f59e0b;
+}
+
+.laptop-menu-dots span:nth-child(3) {
+  background: #10b981;
+}
+
+.laptop-menu-url {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 14px;
+  color: #64748b;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.laptop-menu-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 50px;
+  gap: 36px;
+  position: relative;
+}
+
+.laptop-menu-title-block {
+  text-align: center;
+}
+
+.laptop-menu-title {
+  font-size: 64px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #4338ca 50%, #6d28d9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+  line-height: 1;
+}
+
+.laptop-menu-subtitle {
+  font-size: 18px;
+  color: #475569;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin: 0;
+}
+
+.laptop-menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: stretch;
+  width: 100%;
+  max-width: 380px;
+}
+
+.laptop-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 28px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.06);
+  font-family: inherit;
+}
+
+.laptop-menu-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #6d28d9;
+  transform: translateX(6px);
+  box-shadow: 0 6px 20px rgba(67, 56, 202, 0.18);
+}
+
+.laptop-menu-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.laptop-menu-btn-primary {
+  background: linear-gradient(135deg, #4338ca, #6d28d9);
+  color: #ffffff;
+  border-color: transparent;
+  font-size: 20px;
+  box-shadow: 0 6px 20px rgba(67, 56, 202, 0.3);
+}
+
+.laptop-menu-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3730a3, #5b21b6);
+  box-shadow: 0 10px 28px rgba(67, 56, 202, 0.45);
+  color: #ffffff;
+}
+
+.laptop-menu-btn-icon {
+  font-size: 22px;
+  width: 28px;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.laptop-menu-footer {
+  position: absolute;
+  bottom: 14px;
+  right: 20px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
