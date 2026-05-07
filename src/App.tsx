@@ -164,12 +164,16 @@ function App () {
   const [mistakes, setMistakes] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
-  const [timer, setTimer] = useState(10)
+  const [timer, setTimer] = useState(90)
   const [feedback, setFeedback] = useState('Feedback visas här.')
   const [activeFolder, setActiveFolder] = useState<Folder>('inbox')
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [isReplying, setIsReplying] = useState(false)
   const [replyDraft, setReplyDraft] = useState('')
+  const [playerName, setPlayerName] = useState('')
+  const [leaderboard, setLeaderboard] = useState<{ name: string; score: number }[]>(
+    () => JSON.parse(localStorage.getItem('leaderboard') ?? '[]')
+  )
 
   const selectedEmail = emails.find((email) => email.id === selectedId) ?? null
   const completedCount = emails.filter((email) => email.done).length
@@ -227,6 +231,7 @@ function App () {
     setReplyDraft('')
     setActiveFolder('inbox')
     setSelectedEmployee(null)
+    setPlayerName('')
     setFeedback('Feedback visas här.')
     setScreen('start')
   }
