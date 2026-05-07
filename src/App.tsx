@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { emailTemplates, type Email, type EmailType } from './data/emailTemplates'
 import { employees, type Employee } from './data/employees'
+import { generateAiEmail, pickFallbackEmail } from './services/aiEmailGenerator'
 import './App.css'
 import correctSound from './assets/audio/Correct.mp3'
 import incorrectSound from './assets/audio/Incorrect.mp3'
@@ -48,7 +49,9 @@ const popupImages = [
 
 const popupDelays = [3000, 5000, 7000]
 const maxHearts = 3
-const EMAILS_PER_ROUND = 10
+const INITIAL_INBOX_SIZE = 2
+const NEW_EMAIL_MIN_DELAY = 8000
+const NEW_EMAIL_MAX_DELAY = 14000
 let popupId = 0
 
 const slides = [
@@ -130,6 +133,46 @@ function App () {
   }, [screen])
 
   useEffect(() => {
+    if (screen !== 'game') return
+
+    const controller = new AbortController()
+    let cancelled = false
+    let timeoutId: number | null = null
+
+    const scheduleNext = () => {
+      if (cancelled) return
+      const delay = randomBetween(NEW_EMAIL_MIN_DELAY, NEW_EMAIL_MAX_DELAY)
+      timeoutId = window.setTimeout(async () => {
+        if (cancelled) return
+
+        const aiEmail = await generateAiEmail(controller.signal)
+
+        if (cancelled) return
+
+        if (aiEmail) {
+          setEmails((current) => [aiEmail, ...current])
+        } else {
+          setEmails((current) => {
+            const usedIds = new Set(current.map((e) => e.id))
+            const fallback = pickFallbackEmail(usedIds)
+            return fallback ? [fallback, ...current] : current
+          })
+        }
+
+        scheduleNext()
+      }, delay)
+    }
+
+    scheduleNext()
+
+    return () => {
+      cancelled = true
+      controller.abort()
+      if (timeoutId !== null) window.clearTimeout(timeoutId)
+    }
+  }, [screen])
+
+  useEffect(() => {
     if (screen !== 'game' || mistakes < 1 || activePopups.length >= popupImages.length) return
 
     const delay = randomItem(popupDelays)
@@ -184,17 +227,6 @@ function App () {
     setScreen('start')
   }
 
-  const generateEmails = () => {
-    setEmails(createInbox())
-    setSelectedId(null)
-    setActivePopups([])
-    setComboBurst(0)
-    setMistakes(0)
-    setIsReplying(false)
-    setReplyDraft('')
-    setFeedback('Ny inbox genererad. Börja analysera.')
-  }
-
   const closePopup = (id: number) => {
     setActivePopups((current) => current.filter((popup) => popup.id !== id))
   }
@@ -226,7 +258,6 @@ function App () {
     if (!selectedEmail || selectedEmail.done) return
 
     const isCorrect = choice === selectedEmail.type
-    const isFinalEmail = emails.filter((email) => !email.done).length === 1
     const difficultyBonus = selectedEmail.difficulty === 'hard' ? 40 : selectedEmail.difficulty === 'medium' ? 25 : 10
 
     playSound(isCorrect ? correctSound : incorrectSound)
@@ -244,7 +275,6 @@ function App () {
       if (nextStreak >= 3) setComboBurst(nextStreak)
       setCorrectCount((current) => current + 1)
       setFeedback(`Rätt! ${selectedEmail.hint}`)
-      if (isFinalEmail) window.setTimeout(() => setScreen('end'), 900)
       return
     }
 
@@ -262,8 +292,6 @@ function App () {
     } else if (nextMistakes === 1) {
       playSound(popSound)
       setActivePopups([createPopup()])
-    } else if (isFinalEmail) {
-      window.setTimeout(() => setScreen('end'), 900)
     }
   }
 
@@ -403,8 +431,6 @@ function App () {
 
             <main className="gmail-shell">
               <aside className="gmail-sidebar">
-                <button id="generate-btn" onClick={generateEmails}>New Inbox</button>
-
                 <nav className="gmail-nav" aria-label="Mail folders">
                   <button
                     className={activeFolder === 'inbox' ? 'active-folder' : ''}
@@ -431,11 +457,12 @@ function App () {
 
                 <div className="progress-section">
                   <div className="progress-info">
-                    <span>Progress</span>
-                    <span>{completedCount} / {emails.length} emails</span>
+                    <span>Cleared</span>
+                    <span>{completedCount}</span>
                   </div>
-                  <div className="progress-bar">
-                    <div id="progress-fill" style={{ width: `${(completedCount / emails.length) * 100}%` }} />
+                  <div className="progress-info">
+                    <span>In inbox</span>
+                    <span>{emails.length - completedCount}</span>
                   </div>
                 </div>
               </aside>
@@ -854,7 +881,7 @@ function randomBetween (min: number, max: number) {
 function createInbox () {
   return [...emailTemplates]
     .sort(() => Math.random() - 0.5)
-    .slice(0, EMAILS_PER_ROUND)
+    .slice(0, INITIAL_INBOX_SIZE)
     .map((email) => ({ ...email, done: false, read: false }))
 }
 

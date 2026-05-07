@@ -493,6 +493,19 @@ button:disabled {
   font-weight: 700;
 }
 
+@keyframes email-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    background: #e8f0fe;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    background: white;
+  }
+}
+
 .email-item {
   width: 100%;
   min-height: 86px;
@@ -509,6 +522,7 @@ button:disabled {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  animation: email-slide-in 0.4s ease-out;
 }
 
 .email-item:hover {
