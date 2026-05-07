@@ -50,9 +50,9 @@ const popupImages = [
 const popupDelays = [3000, 5000, 7000]
 const maxHearts = 3
 const SCORE_BAR_TARGET = 1000
-const INITIAL_INBOX_SIZE = 2
-const NEW_EMAIL_MIN_DELAY = 8000
-const NEW_EMAIL_MAX_DELAY = 14000
+const INITIAL_INBOX_SIZE = 3
+const NEW_EMAIL_MIN_DELAY = 4000
+const NEW_EMAIL_MAX_DELAY = 8000
 let popupId = 0
 
 const replyTemplates = [
