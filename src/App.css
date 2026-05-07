@@ -4,7 +4,9 @@
   padding: 0;
 }
 
-body {
+html, body {
+  height: 100%;
+  overflow: hidden;
   background: #0f172a;
   color: #f5f5f5;
 }
@@ -174,12 +176,14 @@ button:disabled {
 #game-screen.active {
   display: block;
   padding: 0;
+  height: 100vh;
   position: relative;
   overflow: hidden;
 }
 
 .gmail-layout {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: #f6f8fc;
   color: #202124;
   display: flex;
@@ -336,6 +340,7 @@ button:disabled {
 .gmail-shell {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
   display: grid;
   grid-template-columns: 250px 1fr;
   gap: 12px;
@@ -345,6 +350,7 @@ button:disabled {
 .gmail-sidebar {
   padding: 16px 12px;
   color: #3c4043;
+  overflow: hidden;
 }
 
 #generate-btn {
@@ -444,6 +450,7 @@ button:disabled {
 
 .email-app {
   min-height: 0;
+  height: 100%;
   display: grid;
   grid-template-columns: minmax(320px, 38%) minmax(420px, 1fr);
   overflow: hidden;
@@ -456,7 +463,9 @@ button:disabled {
 .inbox-list {
   border-right: 1px solid #e0e3eb;
   overflow-y: auto;
+  overflow-x: hidden;
   background: white;
+  height: 100%;
 }
 
 .inbox-title-row {
@@ -606,9 +615,10 @@ button:disabled {
   background: white;
   color: #202124;
   padding: 0;
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .email-header {
@@ -623,6 +633,119 @@ button:disabled {
   gap: 12px;
   align-items: center;
   margin-bottom: 8px;
+}
+
+.email-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.delete-icon-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: #9aa0a6;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.delete-icon-btn:hover {
+  background: #fdecea;
+  color: #c5221f;
+  transform: none;
+}
+
+.sender-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 13px;
+}
+
+.sender-panel.sender-match {
+  background: #e6f4ea;
+  border-color: #c8e6c9;
+  color: #1e7e34;
+}
+
+.sender-panel.sender-spoof {
+  background: #fff4e5;
+  border-color: #fbd9a8;
+  color: #b54708;
+}
+
+.sender-panel.sender-unknown {
+  background: #f1f3f4;
+  border-color: #e0e3eb;
+  color: #5f6368;
+}
+
+.sender-panel .sender-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.06);
+  color: inherit;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.sender-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sender-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sender-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.sender-name {
+  font-weight: 600;
+  color: #202124;
+}
+
+.sender-role {
+  color: #5f6368;
+  font-weight: 400;
+}
+
+.sender-email {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  word-break: break-all;
 }
 
 .email-header p {
@@ -642,9 +765,10 @@ button:disabled {
 .email-body {
   background: white;
   padding: 28px;
-  min-height: 280px;
   border: 0;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .email-body p {
@@ -1879,6 +2003,42 @@ button:disabled {
   font-weight: 500;
 }
 
+.org-email {
+  font-size: 12px;
+  color: #1a73e8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: #eaf1fb;
+  padding: 4px 8px;
+  border-radius: 6px;
+  word-break: break-all;
+  max-width: 100%;
+  margin-top: 4px;
+}
+
+.org-status {
+  font-size: 11px;
+  color: #5f6368;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f3f4;
+  padding: 4px 10px;
+  border-radius: 999px;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.org-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34a853;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(52, 168, 83, 0.18);
+}
+
 /* ── Empty state (Trash) ─────────────────────────────────── */
 
 .org-empty-state {
@@ -1978,10 +2138,21 @@ button:disabled {
 .org-modal-role {
   font-size: 14px;
   color: #5f6368;
-  margin-bottom: 26px;
+  margin-bottom: 10px;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.8px;
+}
+
+.org-modal-email {
+  font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #1a73e8;
+  background: #eaf1fb;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: inline-block;
+  margin-bottom: 22px;
 }
 
 .org-modal-bio {
