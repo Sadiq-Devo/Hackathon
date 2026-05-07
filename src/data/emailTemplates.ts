@@ -16,6 +16,7 @@ export type Email = {
   wrongFeedback?: string
   done?: boolean
   read?: boolean
+  trashed?: boolean
 }
 
 export const emailTemplates: Email[] = [

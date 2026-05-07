@@ -117,7 +117,7 @@ function App () {
   const [mistakes, setMistakes] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
-  const [timer, setTimer] = useState(90)
+  const [timer, setTimer] = useState(150)
   const [feedback, setFeedback] = useState('Feedback visas här.')
   const [activePopups, setActivePopups] = useState<ActivePopup[]>([])
   const [comboBurst, setComboBurst] = useState(0)
@@ -160,7 +160,9 @@ function App () {
           return 0
         }
 
-        return current - 1
+        const next = current - 1
+        if (next <= 30) playTick()
+        return next
       })
     }, 1000)
 
@@ -249,7 +251,7 @@ function App () {
     setMistakes(0)
     setCorrectCount(0)
     setWrongCount(0)
-    setTimer(90)
+    setTimer(150)
     setActivePopups([])
     setComboBurst(0)
     setIsReplying(false)
@@ -455,7 +457,7 @@ function App () {
                     <span className="score-spacebar-shine" />
                   </span>
                 </span>
-                <span>Streak <strong>{streak}</strong></span>
+                <span className="streak-stat">Streak <strong>{streak}</strong></span>
                 <span className="heart-stat" aria-label={`${heartsRemaining} hearts left`}>
                   Hearts
                   <strong className="heart-row">
@@ -469,7 +471,10 @@ function App () {
                     ))}
                   </strong>
                 </span>
-                <span>Time <strong id="timer">{timer}</strong>s</span>
+                <span className={`timer-stat ${timer <= 30 ? 'timer-warning' : ''}`}>
+                  <span className="timer-display-bg">88:88</span>
+                  <strong id="timer">{formatClock(timer)}</strong>
+                </span>
               </div>
             </header>
 
@@ -549,9 +554,43 @@ function App () {
                   </div>
                 </div>
               ) : activeFolder === 'trash' ? (
-                <div className="org-chart-view org-empty-state">
-                  <p>Trash is empty</p>
-                </div>
+                <section className="email-app trash-view">
+                  <aside className="inbox-list">
+                    <div className="inbox-title-row">
+                      <h3>Trash</h3>
+                      <span>{emails.filter((e) => e.trashed).length} items</span>
+                    </div>
+                    <div>
+                      {emails.filter((email) => email.trashed).length === 0 ? (
+                        <div className="trash-empty">Trash is empty</div>
+                      ) : emails.filter((email) => email.trashed).map((email) => (
+                        <button
+                          className="email-item done"
+                          key={email.id}
+                          type="button"
+                          disabled
+                        >
+                          <span className="unread-dot" aria-hidden="true" />
+                          <div className="email-item-content">
+                            <h4>{email.from}</h4>
+                            <p>{email.subject}</p>
+                            <div className="email-meta">
+                              <span>Deleted</span>
+                              <span className={`small-badge ${email.difficulty}`}>{capitalize(email.difficulty)}</span>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </aside>
+                  <section className="email-preview">
+                    <div className="email-body">
+                      <p style={{ color: '#5f6368', fontFamily: 'Courier New, monospace', textAlign: 'center', marginTop: '40px' }}>
+                        Deleted emails. They cannot be restored.
+                      </p>
+                    </div>
+                  </section>
+                </section>
               ) : (
                 <section className="email-app">
                   <aside className="inbox-list">
@@ -560,7 +599,7 @@ function App () {
                       <span>Primary</span>
                     </div>
                     <div>
-                      {emails.map((email) => {
+                      {emails.filter((email) => !email.trashed).map((email) => {
                         const itemClasses = [
                           'email-item',
                           selectedId === email.id ? 'active' : '',
@@ -603,7 +642,14 @@ function App () {
                           {selectedEmail && !selectedEmail.done && (
                             <button
                               className="delete-icon-btn"
-                              onClick={() => handleDecision('phishing')}
+                              onClick={() => {
+                                const idToTrash = selectedEmail.id
+                                handleDecision('phishing')
+                                setEmails((current) => current.map((email) => (
+                                  email.id === idToTrash ? { ...email, trashed: true } : email
+                                )))
+                                setSelectedId(null)
+                              }}
                               aria-label="Delete email"
                               title="Delete"
                             >
@@ -898,6 +944,31 @@ function playSound (source: string) {
   void audio.play().catch(() => {
     // Browsers may block audio in rare cases; gameplay should continue either way.
   })
+}
+
+let tickCtx: AudioContext | null = null
+function playTick () {
+  try {
+    if (!tickCtx) tickCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+    const ctx = tickCtx
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.frequency.value = 1100
+    osc.type = 'square'
+    gain.gain.setValueAtTime(0.04, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.04)
+  } catch {
+    // Web Audio not available; ignore
+  }
+}
+
+function formatClock (seconds: number) {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
 
 function createPopup (): ActivePopup {
