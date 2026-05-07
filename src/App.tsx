@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { emailTemplates, type Email, type EmailType } from './data/emailTemplates'
 import './App.css'
 import correctSound from './assets/audio/Correct.mp3'
 import incorrectSound from './assets/audio/Incorrect.mp3'
@@ -20,20 +21,19 @@ import popup9 from './assets/effects/Popup9.webp'
 import popup10 from './assets/effects/Popup10.jpg'
 
 type Screen = 'intro' | 'start' | 'game' | 'hacked' | 'end'
-type EmailType = 'legit' | 'phishing' | 'ai'
-type Difficulty = 'easy' | 'medium' | 'hard'
+type Folder = 'inbox' | 'trash' | 'org'
 
-type Email = {
-  id: number
-  from: string
-  subject: string
-  body: string
-  link?: string
-  attachment?: string
-  type: EmailType
-  difficulty: Difficulty
-  hint: string
-  done?: boolean
+type Employee = {
+  id: string
+  name: string
+  title: string
+  level: 1 | 2 | 3
+  initials: string
+  color: string
+  bio: string[]
+  recentActivity: string
+  isYou?: boolean
+  image?: string
 }
 
 type ActivePopup = {
@@ -60,6 +60,7 @@ const popupImages = [
 
 const popupDelays = [3000, 5000, 7000]
 const maxHearts = 3
+const EMAILS_PER_ROUND = 10
 let popupId = 0
 
 const slides = [
@@ -72,120 +73,134 @@ const slides = [
     text: 'Kontrollera alltid avsändare, länkar, bilagor och språk. Stress, hot och ovanliga domäner är ofta varningssignaler.',
   },
   {
-    title: 'AI gör bluffar mer trovärdiga',
-    text: 'AI-genererade bluffmejl kan vara välskrivna och personliga. Därför behöver du leta efter subtila mönster och orimliga uppmaningar.',
+    title: 'Hovra över länkar',
+    text: 'En länk kan visa en text och leda någon helt annanstans. Hovra över länken för att se den verkliga adressen innan du klickar.',
   },
   {
     title: 'Träna som en Phish Fighter',
-    text: 'I spelet får du analysera en inbox och fatta snabba beslut. Välj rätt klassificering och håll systemet säkert.',
+    text: 'Svara på legitima mejl, rapportera eller radera phishing. Du har tre hjärtan innan systemet blir hackat.',
   },
 ]
 
-const baseEmails: Email[] = [
+const employees: Employee[] = [
   {
-    id: 1,
-    from: 'it-support@boras.se',
-    subject: 'Planerat lösenordsbyte på fredag',
-    body: 'Hej! På fredag genomför vi planerat underhåll. Du kommer få en påminnelse i företagets vanliga lösenordsportal. Kontakta servicedesk om du har frågor.',
-    link: 'https://intranet.boras.se/password',
-    type: 'legit',
-    difficulty: 'easy',
-    hint: 'Avsändaren, länken och tonen matchar en intern rutin.',
+    id: 'richard',
+    name: 'Richard Calloway',
+    title: 'CEO',
+    level: 1,
+    initials: 'RC',
+    color: '#1a73e8',
+    bio: [
+      '11 years as CEO, loves buzzwords',
+      'Prints out his emails',
+      'Constantly traveling, emails from airports',
+      'Favorite word: "synergy"',
+    ],
+    recentActivity: 'In Singapore, back Friday',
+    image: '/employees/Richard.png',
   },
   {
-    id: 2,
-    from: 'security-alert@micros0ft-login.com',
-    subject: 'Ditt konto stängs inom 30 minuter',
-    body: 'Vi har upptäckt ovanlig aktivitet. Verifiera ditt konto omedelbart för att undvika avstängning.',
-    link: 'http://micros0ft-login.com/verify-now',
-    type: 'phishing',
-    difficulty: 'easy',
-    hint: 'Domänen imiterar Microsoft och använder nollan i micros0ft.',
+    id: 'marcus',
+    name: 'Marcus Osei',
+    title: 'CTO',
+    level: 2,
+    initials: 'MO',
+    color: '#0f9d58',
+    bio: [
+      'Built 3 startups, one succeeded',
+      'Hates long meetings',
+      'Sends short, technical emails',
+      'Motto: "Could\'ve been an email"',
+    ],
+    recentActivity: 'Rolling out new VPN system',
+    image: '/employees/Marcus%20Osei.png',
   },
   {
-    id: 3,
-    from: 'hr@company-careers.ai',
-    subject: 'Personligt policy-dokument för din roll',
-    body: 'Hej Omar, baserat på din nuvarande roll har vi skapat ett individuellt dokument. Bekräfta mottagandet innan dagens slut för fortsatt compliance.',
-    attachment: 'personalized_policy_update.docm',
-    type: 'ai',
-    difficulty: 'medium',
-    hint: 'Mejlet är välskrivet och personligt men konstigt generiskt, med makro-bilaga och press.',
+    id: 'diana',
+    name: 'Diana Chen',
+    title: 'CFO',
+    level: 2,
+    initials: 'DC',
+    color: '#e37400',
+    bio: [
+      'Says no to every budget request',
+      'Said no to the coffee machine for 4 years',
+      'Always 90 seconds late to meetings',
+      'Only fears: a bad quarter',
+    ],
+    recentActivity: 'Q4 budget review in progress',
+    image: '/employees/Diana%20Chen.png',
   },
   {
-    id: 4,
-    from: 'finance@boras.se',
-    subject: 'Kvitton för hackathon-budget',
-    body: 'Hej! Kan du lägga upp kvittona från förra veckans inköp i Teams-mappen innan kl. 15? Tack.',
-    type: 'legit',
-    difficulty: 'easy',
-    hint: 'Ingen misstänkt länk, rimlig uppgift och naturlig ton.',
+    id: 'sandra',
+    name: 'Sandra Kowalski',
+    title: 'HR Manager',
+    level: 2,
+    initials: 'SK',
+    color: '#9334e9',
+    bio: [
+      'Holds the whole office together',
+      'Door always open, coffee always on',
+      'Has seen things. Says nothing.',
+    ],
+    recentActivity: 'Onboarding 3 new hires this month',
+    image: '/employees/Sandra%20Kowalsk.png',
   },
   {
-    id: 5,
-    from: 'dhl-delivery@parcel-track-secure.net',
-    subject: 'Misslyckad leverans: betala avgift',
-    body: 'Din leverans stoppades. Betala 19 SEK nu för att undvika retur.',
-    link: 'https://parcel-track-secure.net/dhl-fee',
-    type: 'phishing',
-    difficulty: 'easy',
-    hint: 'Små avgifter och falska leveransdomäner är klassiska lockbeten.',
+    id: 'priya',
+    name: 'Priya Nair',
+    title: 'Head of IT Security',
+    level: 3,
+    initials: 'PN',
+    color: '#d93025',
+    bio: [
+      'Reason your passwords need 14 characters',
+      'Warns you daily. You don\'t listen.',
+      'Coffee mug: "I told you so"',
+      'Plays CTF competitions',
+    ],
+    recentActivity: 'Running phishing awareness training',
+    image: '/employees/Priya%20Nair.png',
   },
   {
-    id: 6,
-    from: 'anna.lind@boras.se',
-    subject: 'Kan du granska presentationen?',
-    body: 'Hej, jag uppdaterade tre slides om cybersäkerhetsövningen. Säg gärna till om något saknas inför demo.',
-    attachment: 'cybersecurity-training-slides.pdf',
-    type: 'legit',
-    difficulty: 'medium',
-    hint: 'Avsändare, sammanhang och filtyp känns rimliga.',
+    id: 'helena',
+    name: 'Helena Voss',
+    title: 'Legal',
+    level: 3,
+    initials: 'HV',
+    color: '#00796b',
+    bio: [
+      'Reads every line of every contract',
+      'Never says "yes", always "it depends"',
+      'Email signature longer than the contracts',
+      'Rick is a little scared of her',
+    ],
+    recentActivity: 'Reviewing vendor contracts',
+    image: '/employees/Helena%20Voss.png',
   },
   {
-    id: 7,
-    from: 'admin@openai-workspace-support.com',
-    subject: 'AI workspace invoice correction required',
-    body: 'Our automatic system has detected a mismatch in your billing profile. Please review the generated secure correction form attached.',
-    attachment: 'invoice_correction.html',
-    type: 'ai',
-    difficulty: 'hard',
-    hint: 'Professionell text men vag kontext, märklig HTML-bilaga och falsk supportdomän.',
-  },
-  {
-    id: 8,
-    from: 'noreply@github.com',
-    subject: 'New sign-in to your account',
-    body: 'A sign-in was detected from Chrome on macOS. If this was you, no action is needed. If not, review your security log from GitHub.',
-    link: 'https://github.com/settings/security-log',
-    type: 'legit',
-    difficulty: 'medium',
-    hint: 'Länken går till korrekt domän och ber dig inte lämna lösenord direkt.',
-  },
-  {
-    id: 9,
-    from: 'ceo.office@boras-partner.co',
-    subject: 'Snabb betalning behövs konfidentiellt',
-    body: 'Jag sitter i möte och behöver att du omedelbart köper presentkort för ett partnerärende. Svara bara på detta mejl.',
-    type: 'phishing',
-    difficulty: 'medium',
-    hint: 'Chef-bedrägeri: brådska, sekretess och presentkort.',
-  },
-  {
-    id: 10,
-    from: 'productivity-assistant@workflow-ai-mail.com',
-    subject: 'Sammanfattning av dina senaste dokument',
-    body: 'Din veckorytm visar 37% högre risk för blockerad leverans. Klicka för att acceptera den rekommenderade synkroniseringen.',
-    link: 'https://workflow-ai-mail.com/sync',
-    type: 'ai',
-    difficulty: 'hard',
-    hint: 'AI-tonen låter självsäker men oprecis, med fabricerade mätvärden och vag åtgärd.',
+    id: 'you',
+    name: 'You',
+    title: 'HR Specialist',
+    level: 3,
+    initials: 'ME',
+    color: '#1a73e8',
+    isYou: true,
+    bio: [
+      'Works closely with Sandra',
+      'Responsible for IT security training (ironic)',
+      'Replies to emails same day',
+      'Favorite meeting: the one that gets cancelled',
+    ],
+    recentActivity: 'Completing phishing awareness training',
+    image: '/employees/ME.png',
   },
 ]
 
 function App () {
   const [screen, setScreen] = useState<Screen>('intro')
   const [slideIndex, setSlideIndex] = useState(0)
-  const [emails, setEmails] = useState<Email[]>(baseEmails)
+  const [emails, setEmails] = useState<Email[]>(() => createInbox())
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [score, setScore] = useState(0)
   const [streak, setStreak] = useState(0)
@@ -196,6 +211,15 @@ function App () {
   const [feedback, setFeedback] = useState('Feedback visas här.')
   const [activePopups, setActivePopups] = useState<ActivePopup[]>([])
   const [comboBurst, setComboBurst] = useState(0)
+  const [activeFolder, setActiveFolder] = useState<Folder>('inbox')
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
+  const [isReplying, setIsReplying] = useState(false)
+  const [replyDraft, setReplyDraft] = useState('')
+  const [playerName, setPlayerName] = useState('')
+  const [scoreSaved, setScoreSaved] = useState(false)
+  const [leaderboard, setLeaderboard] = useState<{ name: string; score: number }[]>(
+    () => JSON.parse(localStorage.getItem('leaderboard') ?? '[]')
+  )
 
   const selectedEmail = emails.find((email) => email.id === selectedId) ?? null
   const completedCount = emails.filter((email) => email.done).length
@@ -256,15 +280,18 @@ function App () {
   }, [comboBurst])
 
   const startGame = () => {
+    setEmails(createInbox())
     setScreen('game')
     setSelectedId(null)
     setActivePopups([])
     setComboBurst(0)
-    setFeedback('Klicka på ett mejl och välj rätt kategori.')
+    setIsReplying(false)
+    setReplyDraft('')
+    setFeedback('Klicka på ett mejl och välj rätt åtgärd.')
   }
 
   const resetGame = () => {
-    setEmails(baseEmails)
+    setEmails(createInbox())
     setSelectedId(null)
     setScore(0)
     setStreak(0)
@@ -274,24 +301,55 @@ function App () {
     setTimer(90)
     setActivePopups([])
     setComboBurst(0)
+    setIsReplying(false)
+    setReplyDraft('')
+    setActiveFolder('inbox')
+    setSelectedEmployee(null)
+    setPlayerName('')
+    setScoreSaved(false)
     setFeedback('Feedback visas här.')
     setScreen('start')
   }
 
   const generateEmails = () => {
-    setEmails((current) => [...current].sort(() => Math.random() - 0.5).map((email) => ({ ...email, done: false })))
+    setEmails(createInbox())
     setSelectedId(null)
     setActivePopups([])
     setComboBurst(0)
     setMistakes(0)
-    setFeedback('Ny AI-inbox genererad. Börja analysera.')
+    setIsReplying(false)
+    setReplyDraft('')
+    setFeedback('Ny inbox genererad. Börja analysera.')
   }
 
   const closePopup = (id: number) => {
     setActivePopups((current) => current.filter((popup) => popup.id !== id))
   }
 
-  const handleChoice = (choice: EmailType) => {
+  const openEmail = (email: Email) => {
+    playSound(mouseClickSound)
+    setSelectedId(email.id)
+    setIsReplying(false)
+    setReplyDraft('')
+    if (!email.read) {
+      setEmails((current) => current.map((item) => (
+        item.id === email.id ? { ...item, read: true } : item
+      )))
+    }
+  }
+
+  const startReply = () => {
+    if (!selectedEmail || selectedEmail.done) return
+    setIsReplying(true)
+    setReplyDraft('')
+  }
+
+  const cancelReply = () => {
+    setIsReplying(false)
+    setReplyDraft('')
+  }
+
+  const handleDecision = (choice: EmailType) => {
     if (!selectedEmail || selectedEmail.done) return
 
     const isCorrect = choice === selectedEmail.type
@@ -301,8 +359,10 @@ function App () {
     playSound(isCorrect ? correctSound : incorrectSound)
 
     setEmails((current) => current.map((email) => (
-      email.id === selectedEmail.id ? { ...email, done: true } : email
+      email.id === selectedEmail.id ? { ...email, done: true, read: true } : email
     )))
+    setIsReplying(false)
+    setReplyDraft('')
 
     if (isCorrect) {
       const nextStreak = streak + 1
@@ -321,7 +381,7 @@ function App () {
     setComboBurst(0)
     setMistakes(nextMistakes)
     setWrongCount((current) => current + 1)
-    setFeedback(`Fel. Rätt svar var ${labelForChoice(selectedEmail.type)}. ${selectedEmail.hint}`)
+    setFeedback(`Fel. Det här mejlet var ${labelForType(selectedEmail.type)}. ${selectedEmail.hint}`)
 
     if (nextMistakes >= 3) {
       window.setTimeout(() => setScreen('hacked'), 600)
@@ -333,6 +393,20 @@ function App () {
     }
   }
 
+  const sendReply = () => {
+    if (!selectedEmail || selectedEmail.done) return
+    handleDecision('legit')
+  }
+
+  const handleSaveScore = () => {
+    if (!playerName.trim()) return
+    const updated = [...leaderboard, { name: playerName.trim(), score }]
+    setLeaderboard(updated)
+    localStorage.setItem('leaderboard', JSON.stringify(updated))
+    setPlayerName('')
+    setScoreSaved(true)
+  }
+
   const nextSlide = () => {
     if (slideIndex === slides.length - 1) {
       setScreen('start')
@@ -340,6 +414,29 @@ function App () {
     }
 
     setSlideIndex((current) => current + 1)
+  }
+
+  const renderBodyWithLink = (email: Email) => {
+    if (!email.link) {
+      return <p>{email.body}</p>
+    }
+
+    const display = email.displayLink ?? email.link
+    return (
+      <>
+        <p>{email.body}</p>
+        <p className="email-link-line">
+          <a
+            className="email-link"
+            href="#"
+            title={email.link}
+            onClick={(event) => event.preventDefault()}
+          >
+            {display}
+          </a>
+        </p>
+      </>
+    )
   }
 
   return (
@@ -377,17 +474,17 @@ function App () {
           <div className="start-card">
             <h1>Phish Fighter</h1>
             <p>
-              Du sitter på kontoret och måste hantera inkommande mejl. Ditt jobb är att upptäcka phishing,
-              AI-genererade bluffmejl och skilja dem från legitima mejl.
+              Du sitter på kontoret och måste hantera inkommande mejl. Ditt jobb är att skilja
+              legitima mejl från phishing.
             </p>
 
             <div className="instructions">
               <p><strong>Så spelar du:</strong></p>
-              <p>1. Klicka på ett mejl i inkorgen.</p>
-              <p>2. Kontrollera avsändare, länk, bilaga och ton.</p>
-              <p>3. Välj: Legit, Phishing eller AI-generated.</p>
-              <p>4. Du får poäng för rätt svar.</p>
-              <p>5. Om du gör 3 fel blir systemet "hackat".</p>
+              <p>1. Klicka på ett mejl i inkorgen för att öppna det.</p>
+              <p>2. Hovra över länkar för att se den verkliga adressen.</p>
+              <p>3. Tror du mejlet är legitimt? Klicka <strong>Reply</strong> och svara.</p>
+              <p>4. Tror du mejlet är phishing? Klicka <strong>Report</strong> eller <strong>Delete</strong>.</p>
+              <p>5. Du har 3 hjärtan. Varje fel tar ett hjärta, och vid 3 fel blir systemet "hackat".</p>
             </div>
 
             <button id="start-btn" onClick={startGame}>Start Game</button>
@@ -432,14 +529,30 @@ function App () {
 
             <main className="gmail-shell">
               <aside className="gmail-sidebar">
-                <button id="generate-btn" onClick={generateEmails}>New AI Emails</button>
+                <button id="generate-btn" onClick={generateEmails}>New Inbox</button>
 
                 <nav className="gmail-nav" aria-label="Mail folders">
-                  <span className="active-folder">Inbox</span>
-                  <span>Starred</span>
-                  <span>Snoozed</span>
-                  <span>Sent</span>
-                  <span>Spam</span>
+                  <button
+                    className={activeFolder === 'inbox' ? 'active-folder' : ''}
+                    onClick={() => setActiveFolder('inbox')}
+                    type="button"
+                  >
+                    Inbox
+                  </button>
+                  <button
+                    className={activeFolder === 'trash' ? 'active-folder' : ''}
+                    onClick={() => setActiveFolder('trash')}
+                    type="button"
+                  >
+                    Trash
+                  </button>
+                  <button
+                    className={`org-tab ${activeFolder === 'org' ? 'active-folder' : ''}`}
+                    onClick={() => setActiveFolder('org')}
+                    type="button"
+                  >
+                    Organization
+                  </button>
                 </nav>
 
                 <div className="progress-section">
@@ -453,84 +566,174 @@ function App () {
                 </div>
               </aside>
 
-              <section className="email-app">
-                <aside className="inbox-list">
-                  <div className="inbox-title-row">
-                    <h3>Inbox</h3>
-                    <span>Primary</span>
+              {activeFolder === 'org' ? (
+                <div className="org-chart-view">
+                  <div className="org-chart-header">
+                    <h2>Nexus Solutions Inc.</h2>
+                    <p className="org-tagline">Connecting people, data, and headaches since 2009</p>
                   </div>
-                  <div>
-                    {emails.map((email) => (
-                      <button
-                        className={`email-item ${selectedId === email.id ? 'active' : ''} ${email.done ? 'done' : ''}`}
-                        key={email.id}
-                        onClick={() => {
-                          playSound(mouseClickSound)
-                          setSelectedId(email.id)
-                        }}
-                        type="button"
-                      >
-                        <h4>{email.from}</h4>
-                        <p>{email.subject}</p>
-                        <div className="email-meta">
-                          <span>{email.done ? 'Reviewed' : 'Unread'}</span>
-                          <span className={`small-badge ${email.difficulty}`}>{capitalize(email.difficulty)}</span>
-                        </div>
-                      </button>
-                    ))}
+                  <div className="org-chart-container">
+                    <div className="org-chart">
+                      <div className="org-row">
+                        {employees.filter((e) => e.level === 1).map((emp) => (
+                          <OrgCard key={emp.id} employee={emp} onClick={() => setSelectedEmployee(emp)} />
+                        ))}
+                      </div>
+                      <div className="org-fork" />
+                      <div className="org-drops-row">
+                        {employees.filter((e) => e.level === 2).map((emp) => (
+                          <div key={emp.id} className="org-drop" />
+                        ))}
+                      </div>
+                      <div className="org-row">
+                        {employees.filter((e) => e.level === 2).map((emp) => (
+                          <OrgCard key={emp.id} employee={emp} onClick={() => setSelectedEmployee(emp)} />
+                        ))}
+                      </div>
+                      <div className="org-drops-row">
+                        {employees.filter((e) => e.level === 3).map((emp) => (
+                          <div key={emp.id} className="org-drop" />
+                        ))}
+                      </div>
+                      <div className="org-row">
+                        {employees.filter((e) => e.level === 3).map((emp) => (
+                          <OrgCard key={emp.id} employee={emp} onClick={() => setSelectedEmployee(emp)} />
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </aside>
+                </div>
+              ) : activeFolder === 'trash' ? (
+                <div className="org-chart-view org-empty-state">
+                  <p>Trash is empty</p>
+                </div>
+              ) : (
+                <section className="email-app">
+                  <aside className="inbox-list">
+                    <div className="inbox-title-row">
+                      <h3>Inbox</h3>
+                      <span>Primary</span>
+                    </div>
+                    <div>
+                      {emails.map((email) => {
+                        const itemClasses = [
+                          'email-item',
+                          selectedId === email.id ? 'active' : '',
+                          email.done ? 'done' : '',
+                          !email.read && !email.done ? 'unread' : '',
+                        ].filter(Boolean).join(' ')
 
-                <section className="email-preview">
-                  <div className="email-header">
-                    <div className="email-header-top">
-                      <p><strong>From:</strong> <span>{selectedEmail?.from ?? 'Välj ett mejl'}</span></p>
-                      {selectedEmail && (
-                        <span className={`difficulty-badge ${selectedEmail.difficulty}`}>
-                          {capitalize(selectedEmail.difficulty)}
-                        </span>
+                        return (
+                          <button
+                            className={itemClasses}
+                            key={email.id}
+                            onClick={() => openEmail(email)}
+                            type="button"
+                          >
+                            <span className="unread-dot" aria-hidden="true" />
+                            <div className="email-item-content">
+                              <h4>{email.from}</h4>
+                              <p>{email.subject}</p>
+                              <div className="email-meta">
+                                <span>{email.done ? 'Reviewed' : email.read ? 'Read' : 'Unread'}</span>
+                                <span className={`small-badge ${email.difficulty}`}>{capitalize(email.difficulty)}</span>
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </aside>
+
+                  <section className="email-preview">
+                    <div className="email-header">
+                      <div className="email-header-top">
+                        <p><strong>From:</strong> <span>{selectedEmail?.from ?? 'Välj ett mejl'}</span></p>
+                        {selectedEmail && (
+                          <span className={`difficulty-badge ${selectedEmail.difficulty}`}>
+                            {capitalize(selectedEmail.difficulty)}
+                          </span>
+                        )}
+                      </div>
+                      <p><strong>Subject:</strong> <span>{selectedEmail?.subject ?? 'Inget mejl valt'}</span></p>
+                    </div>
+
+                    <div className="email-body">
+                      {selectedEmail
+                        ? renderBodyWithLink(selectedEmail)
+                        : <p>Klicka på ett mejl i inboxen för att börja analysera.</p>}
+
+                      {selectedEmail?.attachment && (
+                        <div className="detail-box">
+                          <strong>📎 Attachment:</strong>
+                          <span>{selectedEmail.attachment}</span>
+                        </div>
                       )}
                     </div>
-                    <p><strong>Subject:</strong> <span>{selectedEmail?.subject ?? 'Inget mejl valt'}</span></p>
-                  </div>
 
-                  <div className="email-body">
-                    <p>
-                      {selectedEmail?.body ?? 'Klicka på ett mejl i inboxen för att börja analysera.'}
-                    </p>
-
-                    {selectedEmail?.link && (
-                      <div className="detail-box">
-                        <strong>Link:</strong>
-                        <span>{selectedEmail.link}</span>
+                    {isReplying && selectedEmail ? (
+                      <div className="reply-composer">
+                        <div className="reply-row">
+                          <strong>To:</strong>
+                          <span>{selectedEmail.from}</span>
+                        </div>
+                        <div className="reply-row">
+                          <strong>Subject:</strong>
+                          <span>Re: {selectedEmail.subject}</span>
+                        </div>
+                        <textarea
+                          className="reply-textarea"
+                          placeholder="Skriv ditt svar..."
+                          value={replyDraft}
+                          onChange={(event) => setReplyDraft(event.target.value)}
+                          autoFocus
+                        />
+                        <div className="reply-actions">
+                          <button
+                            className="reply-send-btn"
+                            onClick={sendReply}
+                            disabled={replyDraft.trim().length === 0}
+                          >
+                            Send
+                          </button>
+                          <button className="reply-cancel-btn" onClick={cancelReply}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="action-toolbar">
+                        <button
+                          className="action-btn reply-btn"
+                          disabled={!selectedEmail || selectedEmail.done}
+                          onClick={startReply}
+                        >
+                          ↩ Reply
+                        </button>
+                        <button
+                          className="action-btn report-btn"
+                          disabled={!selectedEmail || selectedEmail.done}
+                          onClick={() => handleDecision('phishing')}
+                        >
+                          ⚑ Report phishing
+                        </button>
+                        <button
+                          className="action-btn delete-btn"
+                          disabled={!selectedEmail || selectedEmail.done}
+                          onClick={() => handleDecision('phishing')}
+                          aria-label="Delete email"
+                        >
+                          🗑 Delete
+                        </button>
                       </div>
                     )}
 
-                    {selectedEmail?.attachment && (
-                      <div className="detail-box">
-                        <strong>Attachment:</strong>
-                        <span>{selectedEmail.attachment}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="decision-buttons">
-                    <button className="choice-btn" data-choice="legit" disabled={!selectedEmail || selectedEmail.done} onClick={() => handleChoice('legit')}>
-                      Legit
-                    </button>
-                    <button className="choice-btn" data-choice="phishing" disabled={!selectedEmail || selectedEmail.done} onClick={() => handleChoice('phishing')}>
-                      Phishing
-                    </button>
-                    <button className="choice-btn" data-choice="ai" disabled={!selectedEmail || selectedEmail.done} onClick={() => handleChoice('ai')}>
-                      AI-generated
-                    </button>
-                  </div>
-
-                  <div className={`feedback-box ${feedback.startsWith('Rätt') ? 'feedback-correct' : feedback.startsWith('Fel') ? 'feedback-wrong' : ''}`}>
-                    {feedback}
-                  </div>
+                    <div className={`feedback-box ${feedback.startsWith('Rätt') ? 'feedback-correct' : feedback.startsWith('Fel') ? 'feedback-wrong' : ''}`}>
+                      {feedback}
+                    </div>
+                  </section>
                 </section>
-              </section>
+              )}
             </main>
           </div>
 
@@ -597,10 +800,42 @@ function App () {
         </section>
       )}
 
+      {selectedEmployee && (
+        <div className="org-modal-overlay" onClick={() => setSelectedEmployee(null)}>
+          <div className="org-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="org-modal-close" onClick={() => setSelectedEmployee(null)} type="button">×</button>
+            <div
+              className="org-modal-avatar"
+              style={{ background: `${selectedEmployee.color}22`, color: selectedEmployee.color }}
+            >
+              {selectedEmployee.image
+                ? <img src={selectedEmployee.image} alt={selectedEmployee.name} className="org-avatar-img" />
+                : selectedEmployee.initials}
+            </div>
+            <h3 className="org-modal-name">{selectedEmployee.name}</h3>
+            <p className="org-modal-role">{selectedEmployee.title}</p>
+            <ul className="org-modal-bio">
+              {selectedEmployee.bio.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+            <div className="org-modal-activity">
+              <strong>Recent Activity:</strong> {selectedEmployee.recentActivity}
+            </div>
+          </div>
+        </div>
+      )}
+
       {screen === 'end' && (
         <section id="end-screen" className="screen active">
           <div className="end-card">
-            <h1>Game Over</h1>
+            <div className="end-header">
+              <h1>Game Over</h1>
+              <div className="end-rank-badge">
+                <span className="end-rank-label">Rank</span>
+                <span className="end-rank-value">{rank}</span>
+              </div>
+            </div>
 
             <div className="final-grid">
               <div>
@@ -621,9 +856,57 @@ function App () {
               </div>
             </div>
 
-            <p>Rank:</p>
-            <h2 id="rank">{rank}</h2>
-            <p className="final-message">{accuracy >= 80 ? 'Sharp work. You kept the inbox clean.' : 'Keep training. The next inbox will be easier to read.'}</p>
+            <p className="final-message">
+              {accuracy >= 80 ? 'Sharp work. You kept the inbox clean.' : 'Keep training. The next inbox will be easier to read.'}
+            </p>
+
+            {!scoreSaved ? (
+              <div className="end-save-section">
+                <p className="end-save-label">Save your score to the leaderboard</p>
+                <div className="end-save-row">
+                  <input
+                    className="end-name-input"
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveScore()}
+                    placeholder="Your name..."
+                    maxLength={20}
+                  />
+                  <button
+                    className="end-save-btn"
+                    onClick={handleSaveScore}
+                    disabled={!playerName.trim()}
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="end-saved-confirm">
+                ✓ Score saved!
+              </div>
+            )}
+
+            {leaderboard.length > 0 && (
+              <div className="end-leaderboard">
+                <h3>Leaderboard</h3>
+                <div className="leaderboard-list">
+                  {[...leaderboard]
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 10)
+                    .map((player, index) => (
+                      <div className={`leaderboard-row ${index < 3 ? `top-${index + 1}` : ''}`} key={index}>
+                        <span className="lb-rank">
+                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                        </span>
+                        <span className="lb-name">{player.name}</span>
+                        <span className="lb-score">{player.score}</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
             <button id="restart-btn" onClick={resetGame}>Play Again</button>
           </div>
         </section>
@@ -632,9 +915,30 @@ function App () {
   )
 }
 
-function labelForChoice (choice: EmailType) {
-  if (choice === 'ai') return 'AI-generated'
-  return capitalize(choice)
+function OrgCard ({ employee, onClick }: { employee: Employee; onClick: () => void }) {
+  return (
+    <button
+      className={`org-card ${employee.isYou ? 'is-you' : ''}`}
+      onClick={onClick}
+      type="button"
+      style={{ ['--accent-color' as string]: employee.color }}
+    >
+      <div
+        className="org-avatar"
+        style={{ background: `${employee.color}22`, color: employee.color }}
+      >
+        {employee.image
+          ? <img src={employee.image} alt={employee.name} className="org-avatar-img" />
+          : employee.initials}
+      </div>
+      <span className="org-name">{employee.name}</span>
+      <span className="org-title">{employee.title}</span>
+    </button>
+  )
+}
+
+function labelForType (type: EmailType) {
+  return type === 'phishing' ? 'phishing' : 'legitimt'
 }
 
 function capitalize (value: string) {
@@ -669,6 +973,13 @@ function randomItem<T> (items: T[]) {
 
 function randomBetween (min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+function createInbox () {
+  return [...emailTemplates]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, EMAILS_PER_ROUND)
+    .map((email) => ({ ...email, done: false, read: false }))
 }
 
 export default App

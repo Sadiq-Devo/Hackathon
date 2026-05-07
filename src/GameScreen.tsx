@@ -44,40 +44,40 @@ function GameScreen() {
     }
   }
   if (health === 0) {
-    return (
-      <main
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <h1
-          style={{
-            color: "red",
-            fontSize: "90px",
-          }}
-        >
-          YOU HAVE BEEN HACKED!
-        </h1>
+return (
+<main
+style={{
+display: "flex",
+flexDirection: "column",
+justifyContent: "center",
+alignItems: "center",
+height: "100vh",
+}}
+>
+<h1
+style={{
+color: "red",
+fontSize: "90px",
+}}
+>
+YOU HAVE BEEN HACKED!
+</h1>
 
-        <h2>Score: {score}</h2>
+<h2>Score: {score}</h2>
 
-        <button
-          onClick={() => {
-            setHealth(3);
-            setScore(0);
-            setMessage("");
-            setselectedEmail(emails[0]);
-          }}
-        >
-          Restart
-        </button>
-      </main>
-    );
-  }
+<button
+onClick={() => {
+setHealth(3);
+setScore(0);
+setMessage("");
+setselectedEmail(emails[0]);
+}}
+>
+Restart
+</button>
+</main>
+);
+}
   return (
     <main>
       <h1>Inbox defender</h1>
