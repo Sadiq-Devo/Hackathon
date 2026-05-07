@@ -445,6 +445,9 @@ button:disabled {
   color: #202124;
   background: white;
   text-align: left;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .email-item:hover {
@@ -460,7 +463,41 @@ button:disabled {
 
 .email-item.done {
   background: #fafafa;
-  color: #5f6368;
+  color: #9aa0a6;
+}
+
+.email-item.done h4,
+.email-item.done p {
+  color: #9aa0a6;
+}
+
+.email-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.unread-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: transparent;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.email-item.unread .unread-dot {
+  background: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.18);
+}
+
+.email-item.unread h4 {
+  font-weight: 700;
+  color: #202124;
+}
+
+.email-item.unread p {
+  font-weight: 600;
+  color: #3c4043;
 }
 
 .email-item h4 {
@@ -470,6 +507,7 @@ button:disabled {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 400;
 }
 
 .email-item p {
@@ -478,6 +516,7 @@ button:disabled {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 400;
 }
 
 .email-meta {
@@ -574,29 +613,153 @@ button:disabled {
   flex-wrap: wrap;
 }
 
-.decision-buttons {
+.email-link-line {
+  margin-top: 18px;
+}
+
+.email-link {
+  color: #1a73e8;
+  text-decoration: underline;
+  cursor: pointer;
+  word-break: break-all;
+}
+
+.email-link:hover {
+  color: #174ea6;
+  text-decoration: underline;
+}
+
+.email-link:visited {
+  color: #1a73e8;
+}
+
+.action-toolbar {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   padding: 18px 28px 0;
   border-top: 1px solid #edf0f5;
+  flex-wrap: wrap;
 }
 
-.choice-btn {
-  flex: 1;
-  color: white;
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
   border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: white;
+  color: #3c4043;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
-.choice-btn[data-choice="legit"] {
-  background: #22c55e;
+.action-btn:hover:not(:disabled) {
+  transform: none;
 }
 
-.choice-btn[data-choice="phishing"] {
-  background: #ef4444;
+.reply-btn {
+  background: #1a73e8;
+  color: white;
 }
 
-.choice-btn[data-choice="ai"] {
-  background: #8b5cf6;
+.reply-btn:hover:not(:disabled) {
+  background: #174ea6;
+}
+
+.report-btn {
+  background: #fff4e5;
+  color: #b54708;
+  border-color: #fbd9a8;
+}
+
+.report-btn:hover:not(:disabled) {
+  background: #fde2c0;
+}
+
+.delete-btn {
+  background: #fdecea;
+  color: #c5221f;
+  border-color: #f6b8b3;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background: #fbd0cc;
+}
+
+.reply-composer {
+  margin: 18px 28px 0;
+  border: 1px solid #e0e3eb;
+  border-radius: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reply-row {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  color: #3c4043;
+}
+
+.reply-row strong {
+  color: #5f6368;
+  min-width: 60px;
+}
+
+.reply-textarea {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid #e0e3eb;
+  border-radius: 8px;
+  background: white;
+  font-family: inherit;
+  font-size: 14px;
+  color: #202124;
+  outline: none;
+}
+
+.reply-textarea:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.15);
+}
+
+.reply-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.reply-send-btn {
+  background: #1a73e8;
+  color: white;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.reply-send-btn:hover:not(:disabled) {
+  background: #174ea6;
+  transform: none;
+}
+
+.reply-cancel-btn {
+  background: white;
+  color: #3c4043;
+  border: 1px solid #e0e3eb;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.reply-cancel-btn:hover {
+  background: #f1f3f4;
+  transform: none;
 }
 
 .feedback-box {
@@ -790,7 +953,7 @@ button:disabled {
 
 @media (max-width: 700px) {
   .slide-buttons,
-  .decision-buttons {
+  .action-toolbar {
     flex-direction: column;
   }
 
@@ -841,9 +1004,14 @@ button:disabled {
     padding-right: 18px;
   }
 
-  .decision-buttons {
+  .action-toolbar {
     padding-left: 18px;
     padding-right: 18px;
+  }
+
+  .reply-composer {
+    margin-left: 18px;
+    margin-right: 18px;
   }
 
   .feedback-box {
