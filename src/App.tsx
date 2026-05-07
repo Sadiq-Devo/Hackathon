@@ -1,22 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import { emailTemplates, type Email, type EmailType } from './data/emailTemplates'
 import './App.css'
 
 type Screen = 'intro' | 'start' | 'game' | 'hacked' | 'end'
-type EmailType = 'legit' | 'phishing' | 'ai'
-type Difficulty = 'easy' | 'medium' | 'hard'
-
-type Email = {
-  id: number
-  from: string
-  subject: string
-  body: string
-  link?: string
-  attachment?: string
-  type: EmailType
-  difficulty: Difficulty
-  hint: string
-  done?: boolean
-}
+const EMAILS_PER_ROUND = 10
 
 const slides = [
   {
@@ -28,120 +15,19 @@ const slides = [
     text: 'Kontrollera alltid avsändare, länkar, bilagor och språk. Stress, hot och ovanliga domäner är ofta varningssignaler.',
   },
   {
-    title: 'AI gör bluffar mer trovärdiga',
-    text: 'AI-genererade bluffmejl kan vara välskrivna och personliga. Därför behöver du leta efter subtila mönster och orimliga uppmaningar.',
+    title: 'Hovra över länkar',
+    text: 'En länk kan visa en text och leda någon helt annanstans. Hovra över länken för att se den verkliga adressen innan du klickar.',
   },
   {
     title: 'Träna som en Phish Fighter',
-    text: 'I spelet får du analysera en inbox och fatta snabba beslut. Välj rätt klassificering och håll systemet säkert.',
-  },
-]
-
-const baseEmails: Email[] = [
-  {
-    id: 1,
-    from: 'it-support@boras.se',
-    subject: 'Planerat lösenordsbyte på fredag',
-    body: 'Hej! På fredag genomför vi planerat underhåll. Du kommer få en påminnelse i företagets vanliga lösenordsportal. Kontakta servicedesk om du har frågor.',
-    link: 'https://intranet.boras.se/password',
-    type: 'legit',
-    difficulty: 'easy',
-    hint: 'Avsändaren, länken och tonen matchar en intern rutin.',
-  },
-  {
-    id: 2,
-    from: 'security-alert@micros0ft-login.com',
-    subject: 'Ditt konto stängs inom 30 minuter',
-    body: 'Vi har upptäckt ovanlig aktivitet. Verifiera ditt konto omedelbart för att undvika avstängning.',
-    link: 'http://micros0ft-login.com/verify-now',
-    type: 'phishing',
-    difficulty: 'easy',
-    hint: 'Domänen imiterar Microsoft och använder nollan i micros0ft.',
-  },
-  {
-    id: 3,
-    from: 'hr@company-careers.ai',
-    subject: 'Personligt policy-dokument för din roll',
-    body: 'Hej Omar, baserat på din nuvarande roll har vi skapat ett individuellt dokument. Bekräfta mottagandet innan dagens slut för fortsatt compliance.',
-    attachment: 'personalized_policy_update.docm',
-    type: 'ai',
-    difficulty: 'medium',
-    hint: 'Mejlet är välskrivet och personligt men konstigt generiskt, med makro-bilaga och press.',
-  },
-  {
-    id: 4,
-    from: 'finance@boras.se',
-    subject: 'Kvitton för hackathon-budget',
-    body: 'Hej! Kan du lägga upp kvittona från förra veckans inköp i Teams-mappen innan kl. 15? Tack.',
-    type: 'legit',
-    difficulty: 'easy',
-    hint: 'Ingen misstänkt länk, rimlig uppgift och naturlig ton.',
-  },
-  {
-    id: 5,
-    from: 'dhl-delivery@parcel-track-secure.net',
-    subject: 'Misslyckad leverans: betala avgift',
-    body: 'Din leverans stoppades. Betala 19 SEK nu för att undvika retur.',
-    link: 'https://parcel-track-secure.net/dhl-fee',
-    type: 'phishing',
-    difficulty: 'easy',
-    hint: 'Små avgifter och falska leveransdomäner är klassiska lockbeten.',
-  },
-  {
-    id: 6,
-    from: 'anna.lind@boras.se',
-    subject: 'Kan du granska presentationen?',
-    body: 'Hej, jag uppdaterade tre slides om cybersäkerhetsövningen. Säg gärna till om något saknas inför demo.',
-    attachment: 'cybersecurity-training-slides.pdf',
-    type: 'legit',
-    difficulty: 'medium',
-    hint: 'Avsändare, sammanhang och filtyp känns rimliga.',
-  },
-  {
-    id: 7,
-    from: 'admin@openai-workspace-support.com',
-    subject: 'AI workspace invoice correction required',
-    body: 'Our automatic system has detected a mismatch in your billing profile. Please review the generated secure correction form attached.',
-    attachment: 'invoice_correction.html',
-    type: 'ai',
-    difficulty: 'hard',
-    hint: 'Professionell text men vag kontext, märklig HTML-bilaga och falsk supportdomän.',
-  },
-  {
-    id: 8,
-    from: 'noreply@github.com',
-    subject: 'New sign-in to your account',
-    body: 'A sign-in was detected from Chrome on macOS. If this was you, no action is needed. If not, review your security log from GitHub.',
-    link: 'https://github.com/settings/security-log',
-    type: 'legit',
-    difficulty: 'medium',
-    hint: 'Länken går till korrekt domän och ber dig inte lämna lösenord direkt.',
-  },
-  {
-    id: 9,
-    from: 'ceo.office@boras-partner.co',
-    subject: 'Snabb betalning behövs konfidentiellt',
-    body: 'Jag sitter i möte och behöver att du omedelbart köper presentkort för ett partnerärende. Svara bara på detta mejl.',
-    type: 'phishing',
-    difficulty: 'medium',
-    hint: 'Chef-bedrägeri: brådska, sekretess och presentkort.',
-  },
-  {
-    id: 10,
-    from: 'productivity-assistant@workflow-ai-mail.com',
-    subject: 'Sammanfattning av dina senaste dokument',
-    body: 'Din veckorytm visar 37% högre risk för blockerad leverans. Klicka för att acceptera den rekommenderade synkroniseringen.',
-    link: 'https://workflow-ai-mail.com/sync',
-    type: 'ai',
-    difficulty: 'hard',
-    hint: 'AI-tonen låter självsäker men oprecis, med fabricerade mätvärden och vag åtgärd.',
+    text: 'Svara på legitima mejl, rapportera eller radera phishing. Tre fel i rad och systemet är hackat.',
   },
 ]
 
 function App () {
   const [screen, setScreen] = useState<Screen>('intro')
   const [slideIndex, setSlideIndex] = useState(0)
-  const [emails, setEmails] = useState<Email[]>(baseEmails)
+  const [emails, setEmails] = useState<Email[]>(() => createInbox())
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [score, setScore] = useState(0)
   const [streak, setStreak] = useState(0)
@@ -150,6 +36,8 @@ function App () {
   const [wrongCount, setWrongCount] = useState(0)
   const [timer, setTimer] = useState(90)
   const [feedback, setFeedback] = useState('Feedback visas här.')
+  const [isReplying, setIsReplying] = useState(false)
+  const [replyDraft, setReplyDraft] = useState('')
 
   const selectedEmail = emails.find((email) => email.id === selectedId) ?? null
   const completedCount = emails.filter((email) => email.done).length
@@ -186,13 +74,16 @@ function App () {
   }, [screen])
 
   const startGame = () => {
+    setEmails(createInbox())
     setScreen('game')
     setSelectedId(null)
-    setFeedback('Klicka på ett mejl och välj rätt kategori.')
+    setIsReplying(false)
+    setReplyDraft('')
+    setFeedback('Klicka på ett mejl och välj rätt åtgärd.')
   }
 
   const resetGame = () => {
-    setEmails(baseEmails)
+    setEmails(createInbox())
     setSelectedId(null)
     setScore(0)
     setStreak(0)
@@ -200,17 +91,43 @@ function App () {
     setCorrectCount(0)
     setWrongCount(0)
     setTimer(90)
+    setIsReplying(false)
+    setReplyDraft('')
     setFeedback('Feedback visas här.')
     setScreen('start')
   }
 
   const generateEmails = () => {
-    setEmails((current) => [...current].sort(() => Math.random() - 0.5).map((email) => ({ ...email, done: false })))
+    setEmails(createInbox())
     setSelectedId(null)
-    setFeedback('Ny AI-inbox genererad. Börja analysera.')
+    setIsReplying(false)
+    setReplyDraft('')
+    setFeedback('Ny inbox genererad. Börja analysera.')
   }
 
-  const handleChoice = (choice: EmailType) => {
+  const openEmail = (email: Email) => {
+    setSelectedId(email.id)
+    setIsReplying(false)
+    setReplyDraft('')
+    if (!email.read) {
+      setEmails((current) => current.map((item) => (
+        item.id === email.id ? { ...item, read: true } : item
+      )))
+    }
+  }
+
+  const startReply = () => {
+    if (!selectedEmail || selectedEmail.done) return
+    setIsReplying(true)
+    setReplyDraft('')
+  }
+
+  const cancelReply = () => {
+    setIsReplying(false)
+    setReplyDraft('')
+  }
+
+  const handleDecision = (choice: EmailType) => {
     if (!selectedEmail || selectedEmail.done) return
 
     const isCorrect = choice === selectedEmail.type
@@ -218,8 +135,10 @@ function App () {
     const difficultyBonus = selectedEmail.difficulty === 'hard' ? 40 : selectedEmail.difficulty === 'medium' ? 25 : 10
 
     setEmails((current) => current.map((email) => (
-      email.id === selectedEmail.id ? { ...email, done: true } : email
+      email.id === selectedEmail.id ? { ...email, done: true, read: true } : email
     )))
+    setIsReplying(false)
+    setReplyDraft('')
 
     if (isCorrect) {
       const nextStreak = streak + 1
@@ -237,13 +156,18 @@ function App () {
     setStreak(0)
     setMistakes(nextMistakes)
     setWrongCount((current) => current + 1)
-    setFeedback(`Fel. Rätt svar var ${labelForChoice(selectedEmail.type)}. ${selectedEmail.hint}`)
+    setFeedback(`Fel. Det här mejlet var ${labelForType(selectedEmail.type)}. ${selectedEmail.hint}`)
 
     if (nextMistakes >= 3) {
       window.setTimeout(() => setScreen('hacked'), 600)
     } else if (isFinalEmail) {
       window.setTimeout(() => setScreen('end'), 900)
     }
+  }
+
+  const sendReply = () => {
+    if (!selectedEmail || selectedEmail.done) return
+    handleDecision('legit')
   }
 
   const nextSlide = () => {
@@ -253,6 +177,29 @@ function App () {
     }
 
     setSlideIndex((current) => current + 1)
+  }
+
+  const renderBodyWithLink = (email: Email) => {
+    if (!email.link) {
+      return <p>{email.body}</p>
+    }
+
+    const display = email.displayLink ?? email.link
+    return (
+      <>
+        <p>{email.body}</p>
+        <p className="email-link-line">
+          <a
+            className="email-link"
+            href="#"
+            title={email.link}
+            onClick={(event) => event.preventDefault()}
+          >
+            {display}
+          </a>
+        </p>
+      </>
+    )
   }
 
   return (
@@ -290,17 +237,17 @@ function App () {
           <div className="start-card">
             <h1>Phish Fighter</h1>
             <p>
-              Du sitter på kontoret och måste hantera inkommande mejl. Ditt jobb är att upptäcka phishing,
-              AI-genererade bluffmejl och skilja dem från legitima mejl.
+              Du sitter på kontoret och måste hantera inkommande mejl. Ditt jobb är att skilja
+              legitima mejl från phishing.
             </p>
 
             <div className="instructions">
               <p><strong>Så spelar du:</strong></p>
-              <p>1. Klicka på ett mejl i inkorgen.</p>
-              <p>2. Kontrollera avsändare, länk, bilaga och ton.</p>
-              <p>3. Välj: Legit, Phishing eller AI-generated.</p>
-              <p>4. Du får poäng för rätt svar.</p>
-              <p>5. Om du gör 3 fel i rad blir systemet "hackat".</p>
+              <p>1. Klicka på ett mejl i inkorgen för att öppna det.</p>
+              <p>2. Hovra över länkar för att se den verkliga adressen.</p>
+              <p>3. Tror du mejlet är legitimt? Klicka <strong>Reply</strong> och svara.</p>
+              <p>4. Tror du mejlet är phishing? Klicka <strong>Report</strong> eller <strong>Delete</strong>.</p>
+              <p>5. Tre fel i rad och systemet blir "hackat".</p>
             </div>
 
             <button id="start-btn" onClick={startGame}>Start Game</button>
@@ -333,7 +280,7 @@ function App () {
 
             <main className="gmail-shell">
               <aside className="gmail-sidebar">
-                <button id="generate-btn" onClick={generateEmails}>New AI Emails</button>
+                <button id="generate-btn" onClick={generateEmails}>New Inbox</button>
 
                 <nav className="gmail-nav" aria-label="Mail folders">
                   <span className="active-folder">Inbox</span>
@@ -361,21 +308,33 @@ function App () {
                     <span>Primary</span>
                   </div>
                   <div>
-                    {emails.map((email) => (
-                      <button
-                        className={`email-item ${selectedId === email.id ? 'active' : ''} ${email.done ? 'done' : ''}`}
-                        key={email.id}
-                        onClick={() => setSelectedId(email.id)}
-                        type="button"
-                      >
-                        <h4>{email.from}</h4>
-                        <p>{email.subject}</p>
-                        <div className="email-meta">
-                          <span>{email.done ? 'Reviewed' : 'Unread'}</span>
-                          <span className={`small-badge ${email.difficulty}`}>{capitalize(email.difficulty)}</span>
-                        </div>
-                      </button>
-                    ))}
+                    {emails.map((email) => {
+                      const itemClasses = [
+                        'email-item',
+                        selectedId === email.id ? 'active' : '',
+                        email.done ? 'done' : '',
+                        !email.read && !email.done ? 'unread' : '',
+                      ].filter(Boolean).join(' ')
+
+                      return (
+                        <button
+                          className={itemClasses}
+                          key={email.id}
+                          onClick={() => openEmail(email)}
+                          type="button"
+                        >
+                          <span className="unread-dot" aria-hidden="true" />
+                          <div className="email-item-content">
+                            <h4>{email.from}</h4>
+                            <p>{email.subject}</p>
+                            <div className="email-meta">
+                              <span>{email.done ? 'Reviewed' : email.read ? 'Read' : 'Unread'}</span>
+                              <span className={`small-badge ${email.difficulty}`}>{capitalize(email.difficulty)}</span>
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })}
                   </div>
                 </aside>
 
@@ -393,36 +352,74 @@ function App () {
                   </div>
 
                   <div className="email-body">
-                    <p>
-                      {selectedEmail?.body ?? 'Klicka på ett mejl i inboxen för att börja analysera.'}
-                    </p>
-
-                    {selectedEmail?.link && (
-                      <div className="detail-box">
-                        <strong>Link:</strong>
-                        <span>{selectedEmail.link}</span>
-                      </div>
-                    )}
+                    {selectedEmail
+                      ? renderBodyWithLink(selectedEmail)
+                      : <p>Klicka på ett mejl i inboxen för att börja analysera.</p>}
 
                     {selectedEmail?.attachment && (
                       <div className="detail-box">
-                        <strong>Attachment:</strong>
+                        <strong>📎 Attachment:</strong>
                         <span>{selectedEmail.attachment}</span>
                       </div>
                     )}
                   </div>
 
-                  <div className="decision-buttons">
-                    <button className="choice-btn" data-choice="legit" disabled={!selectedEmail || selectedEmail.done} onClick={() => handleChoice('legit')}>
-                      Legit
-                    </button>
-                    <button className="choice-btn" data-choice="phishing" disabled={!selectedEmail || selectedEmail.done} onClick={() => handleChoice('phishing')}>
-                      Phishing
-                    </button>
-                    <button className="choice-btn" data-choice="ai" disabled={!selectedEmail || selectedEmail.done} onClick={() => handleChoice('ai')}>
-                      AI-generated
-                    </button>
-                  </div>
+                  {isReplying && selectedEmail ? (
+                    <div className="reply-composer">
+                      <div className="reply-row">
+                        <strong>To:</strong>
+                        <span>{selectedEmail.from}</span>
+                      </div>
+                      <div className="reply-row">
+                        <strong>Subject:</strong>
+                        <span>Re: {selectedEmail.subject}</span>
+                      </div>
+                      <textarea
+                        className="reply-textarea"
+                        placeholder="Skriv ditt svar..."
+                        value={replyDraft}
+                        onChange={(event) => setReplyDraft(event.target.value)}
+                        autoFocus
+                      />
+                      <div className="reply-actions">
+                        <button
+                          className="reply-send-btn"
+                          onClick={sendReply}
+                          disabled={replyDraft.trim().length === 0}
+                        >
+                          Send
+                        </button>
+                        <button className="reply-cancel-btn" onClick={cancelReply}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="action-toolbar">
+                      <button
+                        className="action-btn reply-btn"
+                        disabled={!selectedEmail || selectedEmail.done}
+                        onClick={startReply}
+                      >
+                        ↩ Reply
+                      </button>
+                      <button
+                        className="action-btn report-btn"
+                        disabled={!selectedEmail || selectedEmail.done}
+                        onClick={() => handleDecision('phishing')}
+                      >
+                        ⚑ Report phishing
+                      </button>
+                      <button
+                        className="action-btn delete-btn"
+                        disabled={!selectedEmail || selectedEmail.done}
+                        onClick={() => handleDecision('phishing')}
+                        aria-label="Delete email"
+                      >
+                        🗑 Delete
+                      </button>
+                    </div>
+                  )}
 
                   <div className={`feedback-box ${feedback.startsWith('Rätt') ? 'feedback-correct' : feedback.startsWith('Fel') ? 'feedback-wrong' : ''}`}>
                     {feedback}
@@ -491,13 +488,19 @@ function App () {
   )
 }
 
-function labelForChoice (choice: EmailType) {
-  if (choice === 'ai') return 'AI-generated'
-  return capitalize(choice)
+function labelForType (type: EmailType) {
+  return type === 'phishing' ? 'phishing' : 'legitimt'
 }
 
 function capitalize (value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function createInbox () {
+  return [...emailTemplates]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, EMAILS_PER_ROUND)
+    .map((email) => ({ ...email, done: false, read: false }))
 }
 
 export default App
