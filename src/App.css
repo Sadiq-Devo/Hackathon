@@ -290,12 +290,96 @@ button:disabled {
   font-size: 13px;
 }
 
-.stats span {
+.stats > span {
   background: white;
   border: 1px solid #e0e3eb;
   border-radius: 999px;
   padding: 7px 10px;
   box-shadow: 0 1px 2px rgba(60, 64, 67, 0.1);
+}
+
+.stats .score-stat {
+  width: 210px;
+  min-height: 48px;
+  padding: 7px 12px 9px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.score-stat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.score-spacebar {
+  position: relative;
+  display: block;
+  height: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f8fafc, #d8dee8);
+  border: 1px solid #b8c1d1;
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.85),
+    inset 0 -2px 4px rgba(32, 33, 36, 0.16);
+}
+
+.score-spacebar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  border-radius: inherit;
+  overflow: hidden;
+  background: linear-gradient(90deg, #16a34a, #22c55e 48%, #38bdf8);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.42);
+  transition: width 0.35s ease;
+  animation: score-fill-pulse 1.4s ease-in-out infinite;
+}
+
+.score-spacebar-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 46px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.58), transparent);
+  transform: translateX(-52px) skewX(-18deg);
+  animation: score-fill-shine 1.15s linear infinite;
+}
+
+.score-spacebar-shine {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  pointer-events: none;
+}
+
+@keyframes score-fill-pulse {
+  0%,
+  100% {
+    filter: saturate(1);
+  }
+
+  50% {
+    filter: saturate(1.35) brightness(1.08);
+  }
+}
+
+@keyframes score-fill-shine {
+  0% {
+    transform: translateX(-52px) skewX(-18deg);
+  }
+
+  100% {
+    transform: translateX(230px) skewX(-18deg);
+  }
 }
 
 .stats strong {
@@ -643,25 +727,27 @@ button:disabled {
 }
 
 .delete-icon-btn {
-  width: 32px;
-  height: 32px;
+  width: 46px;
+  height: 46px;
   padding: 0;
   border-radius: 50%;
-  background: transparent;
-  border: none;
-  color: #9aa0a6;
-  font-size: 15px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  font-size: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.18);
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
 .delete-icon-btn:hover {
-  background: #fdecea;
-  color: #c5221f;
-  transform: none;
+  background: #dc2626;
+  color: white;
+  box-shadow: 0 10px 22px rgba(220, 38, 38, 0.28);
+  transform: scale(1.05);
 }
 
 .sender-panel {
