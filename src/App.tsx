@@ -1,22 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { emailTemplates, type Email, type EmailType } from './data/emailTemplates'
+import { employees, type Employee } from './data/employees'
 import './App.css'
 
 type Screen = 'intro' | 'start' | 'game' | 'hacked' | 'end'
 type Folder = 'inbox' | 'trash' | 'org'
-
-type Employee = {
-  id: string
-  name: string
-  title: string
-  level: 1 | 2 | 3
-  initials: string
-  color: string
-  bio: string[]
-  recentActivity: string
-  isYou?: boolean
-  image?: string
-}
 
 const EMAILS_PER_ROUND = 10
 
@@ -36,121 +24,6 @@ const slides = [
   {
     title: 'Träna som en Phish Fighter',
     text: 'Svara på legitima mejl, rapportera eller radera phishing. Tre fel i rad och systemet är hackat.',
-  },
-]
-
-const employees: Employee[] = [
-  {
-    id: 'richard',
-    name: 'Richard Calloway',
-    title: 'CEO',
-    level: 1,
-    initials: 'RC',
-    color: '#1a73e8',
-    bio: [
-      '11 years as CEO, loves buzzwords',
-      'Prints out his emails',
-      'Constantly traveling, emails from airports',
-      'Favorite word: "synergy"',
-    ],
-    recentActivity: 'In Singapore, back Friday',
-    image: '/employees/Richard.png',
-  },
-  {
-    id: 'marcus',
-    name: 'Marcus Osei',
-    title: 'CTO',
-    level: 2,
-    initials: 'MO',
-    color: '#0f9d58',
-    bio: [
-      'Built 3 startups, one succeeded',
-      'Hates long meetings',
-      'Sends short, technical emails',
-      'Motto: "Could\'ve been an email"',
-    ],
-    recentActivity: 'Rolling out new VPN system',
-    image: '/employees/Marcus%20Osei.png',
-  },
-  {
-    id: 'diana',
-    name: 'Diana Chen',
-    title: 'CFO',
-    level: 2,
-    initials: 'DC',
-    color: '#e37400',
-    bio: [
-      'Says no to every budget request',
-      'Said no to the coffee machine for 4 years',
-      'Always 90 seconds late to meetings',
-      'Only fears: a bad quarter',
-    ],
-    recentActivity: 'Q4 budget review in progress',
-    image: '/employees/Diana%20Chen.png',
-  },
-  {
-    id: 'sandra',
-    name: 'Sandra Kowalski',
-    title: 'HR Manager',
-    level: 2,
-    initials: 'SK',
-    color: '#9334e9',
-    bio: [
-      'Holds the whole office together',
-      'Door always open, coffee always on',
-      'Has seen things. Says nothing.',
-    ],
-    recentActivity: 'Onboarding 3 new hires this month',
-    image: '/employees/Sandra%20Kowalsk.png',
-  },
-  {
-    id: 'priya',
-    name: 'Priya Nair',
-    title: 'Head of IT Security',
-    level: 3,
-    initials: 'PN',
-    color: '#d93025',
-    bio: [
-      'Reason your passwords need 14 characters',
-      'Warns you daily. You don\'t listen.',
-      'Coffee mug: "I told you so"',
-      'Plays CTF competitions',
-    ],
-    recentActivity: 'Running phishing awareness training',
-    image: '/employees/Priya%20Nair.png',
-  },
-  {
-    id: 'helena',
-    name: 'Helena Voss',
-    title: 'Legal',
-    level: 3,
-    initials: 'HV',
-    color: '#00796b',
-    bio: [
-      'Reads every line of every contract',
-      'Never says "yes", always "it depends"',
-      'Email signature longer than the contracts',
-      'Rick is a little scared of her',
-    ],
-    recentActivity: 'Reviewing vendor contracts',
-    image: '/employees/Helena%20Voss.png',
-  },
-  {
-    id: 'you',
-    name: 'You',
-    title: 'HR Specialist',
-    level: 3,
-    initials: 'ME',
-    color: '#1a73e8',
-    isYou: true,
-    bio: [
-      'Works closely with Sandra',
-      'Responsible for IT security training (ironic)',
-      'Replies to emails same day',
-      'Favorite meeting: the one that gets cancelled',
-    ],
-    recentActivity: 'Completing phishing awareness training',
-    image: '/employees/ME.png',
   },
 ]
 
@@ -295,7 +168,8 @@ function App () {
     setStreak(0)
     setMistakes(nextMistakes)
     setWrongCount((current) => current + 1)
-    setFeedback(`Fel. Det här mejlet var ${labelForType(selectedEmail.type)}. ${selectedEmail.hint}`)
+    const flavor = selectedEmail.wrongFeedback ? ` ${selectedEmail.wrongFeedback}` : ''
+    setFeedback(`Fel. Det här mejlet var ${labelForType(selectedEmail.type)}.${flavor} ${selectedEmail.hint}`)
 
     if (nextMistakes >= 3) {
       window.setTimeout(() => setScreen('hacked'), 600)
@@ -539,11 +413,23 @@ function App () {
                     <div className="email-header">
                       <div className="email-header-top">
                         <p><strong>From:</strong> <span>{selectedEmail?.from ?? 'Välj ett mejl'}</span></p>
-                        {selectedEmail && (
-                          <span className={`difficulty-badge ${selectedEmail.difficulty}`}>
-                            {capitalize(selectedEmail.difficulty)}
-                          </span>
-                        )}
+                        <div className="email-header-actions">
+                          {selectedEmail && (
+                            <span className={`difficulty-badge ${selectedEmail.difficulty}`}>
+                              {capitalize(selectedEmail.difficulty)}
+                            </span>
+                          )}
+                          {selectedEmail && !selectedEmail.done && (
+                            <button
+                              className="delete-icon-btn"
+                              onClick={() => handleDecision('phishing')}
+                              aria-label="Delete email"
+                              title="Delete"
+                            >
+                              🗑
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <p><strong>Subject:</strong> <span>{selectedEmail?.subject ?? 'Inget mejl valt'}</span></p>
                     </div>
@@ -600,21 +486,6 @@ function App () {
                         >
                           ↩ Reply
                         </button>
-                        <button
-                          className="action-btn report-btn"
-                          disabled={!selectedEmail || selectedEmail.done}
-                          onClick={() => handleDecision('phishing')}
-                        >
-                          ⚑ Report phishing
-                        </button>
-                        <button
-                          className="action-btn delete-btn"
-                          disabled={!selectedEmail || selectedEmail.done}
-                          onClick={() => handleDecision('phishing')}
-                          aria-label="Delete email"
-                        >
-                          🗑 Delete
-                        </button>
                       </div>
                     )}
 
@@ -665,6 +536,7 @@ function App () {
             </div>
             <h3 className="org-modal-name">{selectedEmployee.name}</h3>
             <p className="org-modal-role">{selectedEmployee.title}</p>
+            <p className="org-modal-email">{selectedEmployee.email}</p>
             <ul className="org-modal-bio">
               {selectedEmployee.bio.map((item, i) => (
                 <li key={i}>{item}</li>
@@ -755,6 +627,10 @@ function OrgCard ({ employee, onClick }: { employee: Employee; onClick: () => vo
       </div>
       <span className="org-name">{employee.name}</span>
       <span className="org-title">{employee.title}</span>
+      <span className="org-email">{employee.email}</span>
+      <span className="org-status" title={employee.recentActivity}>
+        <span className="org-status-dot" /> {employee.recentActivity}
+      </span>
     </button>
   )
 }
