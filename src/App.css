@@ -277,19 +277,75 @@ button:disabled {
   width: 60px;
   height: 48px;
   border-radius: 4px;
-  background: linear-gradient(135deg, #ea4335 0 34%, #fbbc04 34% 52%, #34a853 52% 70%, #4285f4 70%);
-  color: white;
+  background:
+    linear-gradient(90deg, #c4493d 0 7px, transparent 7px 10px, #d7a536 10px 17px, transparent 17px),
+    linear-gradient(180deg, #fff3ce 0%, #d2c9ad 100%);
+  color: #1f2937;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 900;
-  font-size: 26px;
-  font-family: 'Courier New', monospace;
   border: 2px solid #1f2937;
+  position: relative;
+  overflow: hidden;
   box-shadow:
-    inset 1px 1px 0 rgba(255, 255, 255, 0.5),
-    3px 3px 0 rgba(0, 0, 0, 0.22);
-  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+    inset 2px 2px 0 rgba(255, 255, 255, 0.75),
+    inset -2px -2px 0 rgba(0, 0, 0, 0.16),
+    4px 4px 0 rgba(31, 41, 55, 0.25);
+}
+
+.gmail-logo-mark::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(31, 41, 55, 0.4);
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(31, 41, 55, 0.06) 0,
+    rgba(31, 41, 55, 0.06) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+}
+
+.logo-fish-icon {
+  width: 54px;
+  height: 42px;
+  z-index: 1;
+  filter: drop-shadow(2px 2px 0 rgba(31, 41, 55, 0.24));
+}
+
+.logo-body,
+.logo-tail,
+.logo-fin,
+.logo-bottom-fin {
+  stroke: #1f2937;
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+
+.logo-body {
+  fill: #f2c24f;
+}
+
+.logo-tail {
+  fill: #c4493d;
+}
+
+.logo-fin,
+.logo-bottom-fin {
+  fill: #d9783d;
+}
+
+.logo-gill {
+  fill: none;
+  stroke: #1f2937;
+  stroke-linecap: square;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.logo-eye {
+  fill: #1f2937;
 }
 
 .gmail-search {
@@ -2116,6 +2172,17 @@ button:disabled {
 
   .gmail-brand h2 {
     font-size: 18px;
+  }
+
+  .gmail-logo-mark {
+    width: 52px;
+    height: 42px;
+    flex: 0 0 auto;
+  }
+
+  .logo-fish-icon {
+    width: 48px;
+    height: 38px;
   }
 
   .gmail-search {

@@ -437,7 +437,16 @@ function App () {
             <header className="gmail-topbar">
               <div className="gmail-brand">
                 <button className="icon-btn" aria-label="Menu">☰</button>
-                <div className="gmail-logo-mark">M</div>
+                <div className="gmail-logo-mark" aria-label="Phish Fighter Mail fish logo">
+                  <svg className="logo-fish-icon" viewBox="0 0 64 48" aria-hidden="true" focusable="false">
+                    <path className="logo-tail" d="M8 15l15 9L8 33l5-9z" />
+                    <path className="logo-body" d="M21 12h21l12 12-12 12H21l-9-12z" />
+                    <path className="logo-gill" d="M35 15l-4 18" />
+                    <rect className="logo-eye" x="40" y="18" width="5" height="5" />
+                    <path className="logo-fin" d="M26 13l8-7 5 7z" />
+                    <path className="logo-bottom-fin" d="M27 35l7 6 5-6z" />
+                  </svg>
+                </div>
                 <h2>Phish Fighter Mail</h2>
               </div>
 
