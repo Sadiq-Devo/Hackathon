@@ -49,7 +49,41 @@ const popupImages = [
 const popupDelays = [3000, 5000, 7000]
 const maxHearts = 3
 const EMAILS_PER_ROUND = 10
+const SCORE_BAR_TARGET = 1000
 let popupId = 0
+
+const replyTemplates = [
+  'Thanks, I will take care of it.',
+  'Got it, I will handle this now.',
+  'Confirmed. I will follow up shortly.',
+  'Thanks for the update. I am on it.',
+  'Understood, I will check this today.',
+  'Sounds good. I will get back to you soon.',
+  'Confirmed, thanks for letting me know.',
+  'I have seen this and will handle it.',
+  'Thanks, I will review and respond.',
+  'Yes, I can help with that.',
+  'Appreciate the heads up. I will look into it.',
+  'No problem, I will sort this out.',
+  'Thanks. I will confirm once it is done.',
+  'Received, I will take the next step.',
+  'All good, I will follow the usual process.',
+  'Thanks, I will check the details.',
+  'Sure, I will take a look.',
+  'Confirmed. I will update you after checking.',
+  'Thanks, I will make sure this gets done.',
+  'I can do that. Thanks for sending it over.',
+  'Got it. I will verify and reply back.',
+  'Thanks, I will handle it carefully.',
+  'Understood. I will proceed with this.',
+  'Yes, that works for me.',
+  'Thanks for the reminder. I will do it.',
+  'I will check and let you know.',
+  'Confirmed. I will keep you posted.',
+  'Thanks, I will take a look when I can.',
+  'Received. I will deal with this shortly.',
+  'Sounds good, thanks for the message.',
+]
 
 const slides = [
   {
@@ -98,6 +132,7 @@ function App () {
   const completedCount = emails.filter((email) => email.done).length
   const currentSlide = slides[slideIndex]
   const heartsRemaining = Math.max(0, maxHearts - mistakes)
+  const scoreProgress = Math.min(100, Math.round((score / SCORE_BAR_TARGET) * 100))
 
   const rank = useMemo(() => {
     if (score >= 850) return 'Phish Fighter'
@@ -214,7 +249,7 @@ function App () {
   const startReply = () => {
     if (!selectedEmail || selectedEmail.done) return
     setIsReplying(true)
-    setReplyDraft('')
+    setReplyDraft(createReplyDraft(selectedEmail))
   }
 
   const cancelReply = () => {
@@ -382,7 +417,16 @@ function App () {
               </div>
 
               <div className="stats">
-                <span>Score <strong>{score}</strong></span>
+                <span className="score-stat" aria-label={`Score ${score}`}>
+                  <span className="score-stat-top">
+                    <span>Score</span>
+                    <strong>{score}</strong>
+                  </span>
+                  <span className="score-spacebar" aria-hidden="true">
+                    <span className="score-spacebar-fill" style={{ width: `${scoreProgress}%` }} />
+                    <span className="score-spacebar-shine" />
+                  </span>
+                </span>
                 <span>Streak <strong>{streak}</strong></span>
                 <span className="heart-stat" aria-label={`${heartsRemaining} hearts left`}>
                   Hearts
@@ -849,6 +893,11 @@ function randomItem<T> (items: T[]) {
 
 function randomBetween (min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+function createReplyDraft (email: Email) {
+  const intro = randomItem(replyTemplates)
+  return `${intro}\n\nBest,\nNexus Security Team\n\nRe: ${email.subject}`
 }
 
 function createInbox () {
