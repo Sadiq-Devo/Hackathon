@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+import correctSound from '../Correct.mp3'
+import incorrectSound from '../Incorrect.mp3'
+import mouseClickSound from '../Mouseclick.mp3'
 
 type Screen = 'intro' | 'start' | 'game' | 'hacked' | 'end'
 type EmailType = 'legit' | 'phishing' | 'ai'
@@ -217,6 +220,8 @@ function App () {
     const isFinalEmail = emails.filter((email) => !email.done).length === 1
     const difficultyBonus = selectedEmail.difficulty === 'hard' ? 40 : selectedEmail.difficulty === 'medium' ? 25 : 10
 
+    playSound(isCorrect ? correctSound : incorrectSound)
+
     setEmails((current) => current.map((email) => (
       email.id === selectedEmail.id ? { ...email, done: true } : email
     )))
@@ -365,7 +370,10 @@ function App () {
                       <button
                         className={`email-item ${selectedId === email.id ? 'active' : ''} ${email.done ? 'done' : ''}`}
                         key={email.id}
-                        onClick={() => setSelectedId(email.id)}
+                        onClick={() => {
+                          playSound(mouseClickSound)
+                          setSelectedId(email.id)
+                        }}
                         type="button"
                       >
                         <h4>{email.from}</h4>
@@ -498,6 +506,14 @@ function labelForChoice (choice: EmailType) {
 
 function capitalize (value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function playSound (source: string) {
+  const audio = new Audio(source)
+  audio.currentTime = 0
+  void audio.play().catch(() => {
+    // Browsers may block audio in rare cases; gameplay should continue either way.
+  })
 }
 
 export default App
