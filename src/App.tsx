@@ -4,6 +4,20 @@ import './App.css'
 type Screen = 'intro' | 'start' | 'game' | 'hacked' | 'end'
 type EmailType = 'legit' | 'phishing' | 'ai'
 type Difficulty = 'easy' | 'medium' | 'hard'
+type Folder = 'inbox' | 'trash' | 'org'
+
+type Employee = {
+  id: string
+  name: string
+  title: string
+  level: 1 | 2 | 3
+  initials: string
+  color: string
+  bio: string[]
+  recentActivity: string
+  isYou?: boolean
+  image?: string
+}
 
 type Email = {
   id: number
@@ -138,6 +152,121 @@ const baseEmails: Email[] = [
   },
 ]
 
+const employees: Employee[] = [
+  {
+    id: 'richard',
+    name: 'Richard Calloway',
+    title: 'CEO',
+    level: 1,
+    initials: 'RC',
+    color: '#1a73e8',
+    bio: [
+      '11 years as CEO, loves buzzwords',
+      'Prints out his emails',
+      'Constantly traveling, emails from airports',
+      'Favorite word: "synergy"',
+    ],
+    recentActivity: 'In Singapore, back Friday',
+    image: '/employees/Richard.png',
+  },
+  {
+    id: 'marcus',
+    name: 'Marcus Osei',
+    title: 'CTO',
+    level: 2,
+    initials: 'MO',
+    color: '#0f9d58',
+    bio: [
+      'Built 3 startups, one succeeded',
+      'Hates long meetings',
+      'Sends short, technical emails',
+      'Motto: "Could\'ve been an email"',
+    ],
+    recentActivity: 'Rolling out new VPN system',
+    image: '/employees/Marcus%20Osei.png',
+  },
+  {
+    id: 'diana',
+    name: 'Diana Chen',
+    title: 'CFO',
+    level: 2,
+    initials: 'DC',
+    color: '#e37400',
+    bio: [
+      'Says no to every budget request',
+      'Said no to the coffee machine for 4 years',
+      'Always 90 seconds late to meetings',
+      'Only fears: a bad quarter',
+    ],
+    recentActivity: 'Q4 budget review in progress',
+    image: '/employees/Diana%20Chen.png',
+  },
+  {
+    id: 'sandra',
+    name: 'Sandra Kowalski',
+    title: 'HR Manager',
+    level: 2,
+    initials: 'SK',
+    color: '#9334e9',
+    bio: [
+      'Holds the whole office together',
+      'Door always open, coffee always on',
+      'Has seen things. Says nothing.',
+    ],
+    recentActivity: 'Onboarding 3 new hires this month',
+    image: '/employees/Sandra%20Kowalsk.png',
+  },
+  {
+    id: 'priya',
+    name: 'Priya Nair',
+    title: 'Head of IT Security',
+    level: 3,
+    initials: 'PN',
+    color: '#d93025',
+    bio: [
+      'Reason your passwords need 14 characters',
+      'Warns you daily. You don\'t listen.',
+      'Coffee mug: "I told you so"',
+      'Plays CTF competitions',
+    ],
+    recentActivity: 'Running phishing awareness training',
+    image: '/employees/Priya%20Nair.png',
+  },
+  {
+    id: 'helena',
+    name: 'Helena Voss',
+    title: 'Legal',
+    level: 3,
+    initials: 'HV',
+    color: '#00796b',
+    bio: [
+      'Reads every line of every contract',
+      'Never says "yes", always "it depends"',
+      'Email signature longer than the contracts',
+      'Rick is a little scared of her',
+    ],
+    recentActivity: 'Reviewing vendor contracts',
+    image: '/employees/Helena%20Voss.png',
+  },
+  {
+    id: 'you',
+    name: 'You',
+    title: 'HR Specialist',
+    level: 3,
+    initials: 'ME',
+    color: '#1a73e8',
+    isYou: true,
+    bio: [
+      'Works closely with Sandra',
+      'Responsible for IT security training (ironic)',
+      'Replies to emails same day',
+      'Favorite meeting: the one that gets cancelled',
+    ],
+    recentActivity: 'Completing phishing awareness training',
+    image: '/employees/ME.png',
+  },
+]
+
 function App () {
   const [screen, setScreen] = useState<Screen>('intro')
   const [slideIndex, setSlideIndex] = useState(0)
@@ -150,6 +279,8 @@ function App () {
   const [wrongCount, setWrongCount] = useState(0)
   const [timer, setTimer] = useState(90)
   const [feedback, setFeedback] = useState('Feedback visas här.')
+  const [activeFolder, setActiveFolder] = useState<Folder>('inbox')
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
 
   const selectedEmail = emails.find((email) => email.id === selectedId) ?? null
   const completedCount = emails.filter((email) => email.done).length
@@ -201,6 +332,8 @@ function App () {
     setWrongCount(0)
     setTimer(90)
     setFeedback('Feedback visas här.')
+    setActiveFolder('inbox')
+    setSelectedEmployee(null)
     setScreen('start')
   }
 
@@ -336,11 +469,27 @@ function App () {
                 <button id="generate-btn" onClick={generateEmails}>New AI Emails</button>
 
                 <nav className="gmail-nav" aria-label="Mail folders">
-                  <span className="active-folder">Inbox</span>
-                  <span>Starred</span>
-                  <span>Snoozed</span>
-                  <span>Sent</span>
-                  <span>Spam</span>
+                  <button
+                    className={activeFolder === 'inbox' ? 'active-folder' : ''}
+                    onClick={() => setActiveFolder('inbox')}
+                    type="button"
+                  >
+                    Inbox
+                  </button>
+                  <button
+                    className={activeFolder === 'trash' ? 'active-folder' : ''}
+                    onClick={() => setActiveFolder('trash')}
+                    type="button"
+                  >
+                    Trash
+                  </button>
+                  <button
+                    className={`org-tab ${activeFolder === 'org' ? 'active-folder' : ''}`}
+                    onClick={() => setActiveFolder('org')}
+                    type="button"
+                  >
+                    Organization
+                  </button>
                 </nav>
 
                 <div className="progress-section">
@@ -354,81 +503,124 @@ function App () {
                 </div>
               </aside>
 
-              <section className="email-app">
-                <aside className="inbox-list">
-                  <div className="inbox-title-row">
-                    <h3>Inbox</h3>
-                    <span>Primary</span>
+              {activeFolder === 'org' ? (
+                <div className="org-chart-view">
+                  <div className="org-chart-header">
+                    <h2>Nexus Solutions Inc.</h2>
+                    <p className="org-tagline">Connecting people, data, and headaches since 2009</p>
                   </div>
-                  <div>
-                    {emails.map((email) => (
-                      <button
-                        className={`email-item ${selectedId === email.id ? 'active' : ''} ${email.done ? 'done' : ''}`}
-                        key={email.id}
-                        onClick={() => setSelectedId(email.id)}
-                        type="button"
-                      >
-                        <h4>{email.from}</h4>
-                        <p>{email.subject}</p>
-                        <div className="email-meta">
-                          <span>{email.done ? 'Reviewed' : 'Unread'}</span>
-                          <span className={`small-badge ${email.difficulty}`}>{capitalize(email.difficulty)}</span>
-                        </div>
-                      </button>
-                    ))}
+                  <div className="org-chart-container">
+                    <div className="org-chart">
+                    <div className="org-row">
+                      {employees.filter((e) => e.level === 1).map((emp) => (
+                        <OrgCard key={emp.id} employee={emp} onClick={() => setSelectedEmployee(emp)} />
+                      ))}
+                    </div>
+                    <div className="org-fork" />
+                    <div className="org-drops-row">
+                      {employees.filter((e) => e.level === 2).map((emp) => (
+                        <div key={emp.id} className="org-drop" />
+                      ))}
+                    </div>
+                    <div className="org-row">
+                      {employees.filter((e) => e.level === 2).map((emp) => (
+                        <OrgCard key={emp.id} employee={emp} onClick={() => setSelectedEmployee(emp)} />
+                      ))}
+                    </div>
+                    <div className="org-drops-row">
+                      {employees.filter((e) => e.level === 3).map((emp) => (
+                        <div key={emp.id} className="org-drop" />
+                      ))}
+                    </div>
+                    <div className="org-row">
+                      {employees.filter((e) => e.level === 3).map((emp) => (
+                        <OrgCard key={emp.id} employee={emp} onClick={() => setSelectedEmployee(emp)} />
+                      ))}
+                    </div>
                   </div>
-                </aside>
+                  </div>
+                </div>
+              ) : activeFolder === 'trash' ? (
+                <div className="org-chart-view org-empty-state">
+                  <p>Trash is empty</p>
+                </div>
+              ) : (
+                <section className="email-app">
+                  <aside className="inbox-list">
+                    <div className="inbox-title-row">
+                      <h3>Inbox</h3>
+                      <span>Primary</span>
+                    </div>
+                    <div>
+                      {emails.map((email) => (
+                        <button
+                          className={`email-item ${selectedId === email.id ? 'active' : ''} ${email.done ? 'done' : ''}`}
+                          key={email.id}
+                          onClick={() => setSelectedId(email.id)}
+                          type="button"
+                        >
+                          <h4>{email.from}</h4>
+                          <p>{email.subject}</p>
+                          <div className="email-meta">
+                            <span>{email.done ? 'Reviewed' : 'Unread'}</span>
+                            <span className={`small-badge ${email.difficulty}`}>{capitalize(email.difficulty)}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </aside>
 
-                <section className="email-preview">
-                  <div className="email-header">
-                    <div className="email-header-top">
-                      <p><strong>From:</strong> <span>{selectedEmail?.from ?? 'Välj ett mejl'}</span></p>
-                      {selectedEmail && (
-                        <span className={`difficulty-badge ${selectedEmail.difficulty}`}>
-                          {capitalize(selectedEmail.difficulty)}
-                        </span>
+                  <section className="email-preview">
+                    <div className="email-header">
+                      <div className="email-header-top">
+                        <p><strong>From:</strong> <span>{selectedEmail?.from ?? 'Välj ett mejl'}</span></p>
+                        {selectedEmail && (
+                          <span className={`difficulty-badge ${selectedEmail.difficulty}`}>
+                            {capitalize(selectedEmail.difficulty)}
+                          </span>
+                        )}
+                      </div>
+                      <p><strong>Subject:</strong> <span>{selectedEmail?.subject ?? 'Inget mejl valt'}</span></p>
+                    </div>
+
+                    <div className="email-body">
+                      <p>
+                        {selectedEmail?.body ?? 'Klicka på ett mejl i inboxen för att börja analysera.'}
+                      </p>
+
+                      {selectedEmail?.link && (
+                        <div className="detail-box">
+                          <strong>Link:</strong>
+                          <span>{selectedEmail.link}</span>
+                        </div>
+                      )}
+
+                      {selectedEmail?.attachment && (
+                        <div className="detail-box">
+                          <strong>Attachment:</strong>
+                          <span>{selectedEmail.attachment}</span>
+                        </div>
                       )}
                     </div>
-                    <p><strong>Subject:</strong> <span>{selectedEmail?.subject ?? 'Inget mejl valt'}</span></p>
-                  </div>
 
-                  <div className="email-body">
-                    <p>
-                      {selectedEmail?.body ?? 'Klicka på ett mejl i inboxen för att börja analysera.'}
-                    </p>
+                    <div className="decision-buttons">
+                      <button className="choice-btn" data-choice="legit" disabled={!selectedEmail || selectedEmail.done} onClick={() => handleChoice('legit')}>
+                        Legit
+                      </button>
+                      <button className="choice-btn" data-choice="phishing" disabled={!selectedEmail || selectedEmail.done} onClick={() => handleChoice('phishing')}>
+                        Phishing
+                      </button>
+                      <button className="choice-btn" data-choice="ai" disabled={!selectedEmail || selectedEmail.done} onClick={() => handleChoice('ai')}>
+                        AI-generated
+                      </button>
+                    </div>
 
-                    {selectedEmail?.link && (
-                      <div className="detail-box">
-                        <strong>Link:</strong>
-                        <span>{selectedEmail.link}</span>
-                      </div>
-                    )}
-
-                    {selectedEmail?.attachment && (
-                      <div className="detail-box">
-                        <strong>Attachment:</strong>
-                        <span>{selectedEmail.attachment}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="decision-buttons">
-                    <button className="choice-btn" data-choice="legit" disabled={!selectedEmail || selectedEmail.done} onClick={() => handleChoice('legit')}>
-                      Legit
-                    </button>
-                    <button className="choice-btn" data-choice="phishing" disabled={!selectedEmail || selectedEmail.done} onClick={() => handleChoice('phishing')}>
-                      Phishing
-                    </button>
-                    <button className="choice-btn" data-choice="ai" disabled={!selectedEmail || selectedEmail.done} onClick={() => handleChoice('ai')}>
-                      AI-generated
-                    </button>
-                  </div>
-
-                  <div className={`feedback-box ${feedback.startsWith('Rätt') ? 'feedback-correct' : feedback.startsWith('Fel') ? 'feedback-wrong' : ''}`}>
-                    {feedback}
-                  </div>
+                    <div className={`feedback-box ${feedback.startsWith('Rätt') ? 'feedback-correct' : feedback.startsWith('Fel') ? 'feedback-wrong' : ''}`}>
+                      {feedback}
+                    </div>
+                  </section>
                 </section>
-              </section>
+              )}
             </main>
           </div>
         </section>
@@ -454,6 +646,32 @@ function App () {
           <div className="popup popup-4">System infected!</div>
           <div className="popup popup-5">Ads are taking over!</div>
         </section>
+      )}
+
+      {selectedEmployee && (
+        <div className="org-modal-overlay" onClick={() => setSelectedEmployee(null)}>
+          <div className="org-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="org-modal-close" onClick={() => setSelectedEmployee(null)} type="button">×</button>
+            <div
+              className="org-modal-avatar"
+              style={{ background: `${selectedEmployee.color}22`, color: selectedEmployee.color }}
+            >
+              {selectedEmployee.image
+                ? <img src={selectedEmployee.image} alt={selectedEmployee.name} className="org-avatar-img" />
+                : selectedEmployee.initials}
+            </div>
+            <h3 className="org-modal-name">{selectedEmployee.name}</h3>
+            <p className="org-modal-role">{selectedEmployee.title}</p>
+            <ul className="org-modal-bio">
+              {selectedEmployee.bio.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+            <div className="org-modal-activity">
+              <strong>Recent Activity:</strong> {selectedEmployee.recentActivity}
+            </div>
+          </div>
+        </div>
       )}
 
       {screen === 'end' && (
@@ -488,6 +706,28 @@ function App () {
         </section>
       )}
     </>
+  )
+}
+
+function OrgCard ({ employee, onClick }: { employee: Employee; onClick: () => void }) {
+  return (
+    <button
+      className={`org-card ${employee.isYou ? 'is-you' : ''}`}
+      onClick={onClick}
+      type="button"
+      style={{ ['--accent-color' as string]: employee.color }}
+    >
+      <div
+        className="org-avatar"
+        style={{ background: `${employee.color}22`, color: employee.color }}
+      >
+        {employee.image
+          ? <img src={employee.image} alt={employee.name} className="org-avatar-img" />
+          : employee.initials}
+      </div>
+      <span className="org-name">{employee.name}</span>
+      <span className="org-title">{employee.title}</span>
+    </button>
   )
 }
 
