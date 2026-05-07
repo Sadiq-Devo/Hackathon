@@ -1,8 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
-import correctSound from '../Correct.mp3'
-import incorrectSound from '../Incorrect.mp3'
-import mouseClickSound from '../Mouseclick.mp3'
+import correctSound from './assets/audio/Correct.mp3'
+import incorrectSound from './assets/audio/Incorrect.mp3'
+import mouseClickSound from './assets/audio/Mouseclick.mp3'
+import popSound from './assets/audio/Pop.mp3'
+import boomImage from './assets/effects/Boom.avif'
+import fishGif from './assets/effects/Fish.gif'
+import heartEmpty from './assets/effects/heart_empty.png'
+import heartFull from './assets/effects/heart_full.png'
+import popup1 from './assets/effects/Popup1.jpg'
+import popup2 from './assets/effects/Popup2.gif'
+import popup3 from './assets/effects/Popup3.gif'
+import popup4 from './assets/effects/Popup4.png'
+import popup5 from './assets/effects/Popup5.jpeg'
+import popup6 from './assets/effects/Popup6.png'
+import popup7 from './assets/effects/Popup7.webp'
+import popup8 from './assets/effects/Popup8.jpg'
+import popup9 from './assets/effects/Popup9.webp'
+import popup10 from './assets/effects/Popup10.jpg'
 
 type Screen = 'intro' | 'start' | 'game' | 'hacked' | 'end'
 type EmailType = 'legit' | 'phishing' | 'ai'
@@ -20,6 +35,32 @@ type Email = {
   hint: string
   done?: boolean
 }
+
+type ActivePopup = {
+  id: number
+  image: string
+  alt: string
+  top: number
+  left: number
+  rotation: number
+}
+
+const popupImages = [
+  { image: popup1, alt: 'Suspicious popup 1' },
+  { image: popup2, alt: 'Suspicious popup 2' },
+  { image: popup3, alt: 'Suspicious popup 3' },
+  { image: popup4, alt: 'Suspicious popup 4' },
+  { image: popup5, alt: 'Suspicious popup 5' },
+  { image: popup6, alt: 'Suspicious popup 6' },
+  { image: popup7, alt: 'Suspicious popup 7' },
+  { image: popup8, alt: 'Suspicious popup 8' },
+  { image: popup9, alt: 'Suspicious popup 9' },
+  { image: popup10, alt: 'Suspicious popup 10' },
+]
+
+const popupDelays = [3000, 5000, 7000]
+const maxHearts = 3
+let popupId = 0
 
 const slides = [
   {
@@ -153,10 +194,13 @@ function App () {
   const [wrongCount, setWrongCount] = useState(0)
   const [timer, setTimer] = useState(90)
   const [feedback, setFeedback] = useState('Feedback visas här.')
+  const [activePopups, setActivePopups] = useState<ActivePopup[]>([])
+  const [comboBurst, setComboBurst] = useState(0)
 
   const selectedEmail = emails.find((email) => email.id === selectedId) ?? null
   const completedCount = emails.filter((email) => email.done).length
   const currentSlide = slides[slideIndex]
+  const heartsRemaining = Math.max(0, maxHearts - mistakes)
 
   const rank = useMemo(() => {
     if (score >= 850) return 'Phish Fighter'
@@ -188,9 +232,34 @@ function App () {
     return () => window.clearInterval(interval)
   }, [screen])
 
+  useEffect(() => {
+    if (screen !== 'game' || mistakes < 1 || activePopups.length >= popupImages.length) return
+
+    const delay = randomItem(popupDelays)
+    const timeout = window.setTimeout(() => {
+      setActivePopups((current) => {
+        if (current.length >= popupImages.length) return current
+
+        playSound(popSound)
+        return [...current, createPopup()]
+      })
+    }, delay)
+
+    return () => window.clearTimeout(timeout)
+  }, [activePopups.length, mistakes, screen])
+
+  useEffect(() => {
+    if (comboBurst === 0) return
+
+    const timeout = window.setTimeout(() => setComboBurst(0), 1200)
+    return () => window.clearTimeout(timeout)
+  }, [comboBurst])
+
   const startGame = () => {
     setScreen('game')
     setSelectedId(null)
+    setActivePopups([])
+    setComboBurst(0)
     setFeedback('Klicka på ett mejl och välj rätt kategori.')
   }
 
@@ -203,6 +272,8 @@ function App () {
     setCorrectCount(0)
     setWrongCount(0)
     setTimer(90)
+    setActivePopups([])
+    setComboBurst(0)
     setFeedback('Feedback visas här.')
     setScreen('start')
   }
@@ -210,7 +281,14 @@ function App () {
   const generateEmails = () => {
     setEmails((current) => [...current].sort(() => Math.random() - 0.5).map((email) => ({ ...email, done: false })))
     setSelectedId(null)
+    setActivePopups([])
+    setComboBurst(0)
+    setMistakes(0)
     setFeedback('Ny AI-inbox genererad. Börja analysera.')
+  }
+
+  const closePopup = (id: number) => {
+    setActivePopups((current) => current.filter((popup) => popup.id !== id))
   }
 
   const handleChoice = (choice: EmailType) => {
@@ -230,7 +308,7 @@ function App () {
       const nextStreak = streak + 1
       setScore((current) => current + 75 + difficultyBonus + nextStreak * 5)
       setStreak(nextStreak)
-      setMistakes(0)
+      if (nextStreak >= 3) setComboBurst(nextStreak)
       setCorrectCount((current) => current + 1)
       setFeedback(`Rätt! ${selectedEmail.hint}`)
       if (isFinalEmail) window.setTimeout(() => setScreen('end'), 900)
@@ -240,12 +318,16 @@ function App () {
     const nextMistakes = mistakes + 1
     setScore((current) => Math.max(0, current - 35))
     setStreak(0)
+    setComboBurst(0)
     setMistakes(nextMistakes)
     setWrongCount((current) => current + 1)
     setFeedback(`Fel. Rätt svar var ${labelForChoice(selectedEmail.type)}. ${selectedEmail.hint}`)
 
     if (nextMistakes >= 3) {
       window.setTimeout(() => setScreen('hacked'), 600)
+    } else if (nextMistakes === 1) {
+      playSound(popSound)
+      setActivePopups([createPopup()])
     } else if (isFinalEmail) {
       window.setTimeout(() => setScreen('end'), 900)
     }
@@ -305,7 +387,7 @@ function App () {
               <p>2. Kontrollera avsändare, länk, bilaga och ton.</p>
               <p>3. Välj: Legit, Phishing eller AI-generated.</p>
               <p>4. Du får poäng för rätt svar.</p>
-              <p>5. Om du gör 3 fel i rad blir systemet "hackat".</p>
+              <p>5. Om du gör 3 fel blir systemet "hackat".</p>
             </div>
 
             <button id="start-btn" onClick={startGame}>Start Game</button>
@@ -314,7 +396,7 @@ function App () {
       )}
 
       {screen === 'game' && (
-        <section id="game-screen" className="screen active">
+        <section id="game-screen" className={`screen active ${mistakes >= 1 ? 'infection-level-1' : ''} ${mistakes >= 2 ? 'infection-level-2' : ''}`}>
           <div className="gmail-layout">
             <header className="gmail-topbar">
               <div className="gmail-brand">
@@ -331,7 +413,19 @@ function App () {
               <div className="stats">
                 <span>Score <strong>{score}</strong></span>
                 <span>Streak <strong>{streak}</strong></span>
-                <span>Mistakes <strong>{mistakes}</strong></span>
+                <span className="heart-stat" aria-label={`${heartsRemaining} hearts left`}>
+                  Hearts
+                  <strong className="heart-row">
+                    {Array.from({ length: maxHearts }, (_, index) => (
+                      <img
+                        alt={index < heartsRemaining ? 'Full heart' : 'Empty heart'}
+                        className={index < heartsRemaining ? 'heart full' : 'heart empty'}
+                        key={index}
+                        src={index < heartsRemaining ? heartFull : heartEmpty}
+                      />
+                    ))}
+                  </strong>
+                </span>
                 <span>Time <strong id="timer">{timer}</strong>s</span>
               </div>
             </header>
@@ -439,6 +533,43 @@ function App () {
               </section>
             </main>
           </div>
+
+          {mistakes >= 1 && (
+            <div className="annoyance-layer" aria-live="polite">
+              {mistakes >= 2 && <div className="glitch-overlay" aria-hidden="true" />}
+              <img className="swimming-fish" src={fishGif} alt="Animated phishing fish" />
+              {activePopups.map((popup) => (
+                <div
+                  className="ad-popup"
+                  key={popup.id}
+                  style={{
+                    top: `${popup.top}%`,
+                    left: `${popup.left}%`,
+                    transform: `rotate(${popup.rotation}deg)`,
+                  }}
+                >
+                  <div className="ad-popup-title">
+                    <span>System Alert</span>
+                    <button type="button" aria-label="Close popup" onClick={() => closePopup(popup.id)}>x</button>
+                  </div>
+                  <img src={popup.image} alt={popup.alt} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {comboBurst >= 3 && (
+            <div className="combo-burst" aria-live="polite">
+              <img className="combo-boom" src={boomImage} alt="" aria-hidden="true" />
+              <div className="combo-text">
+                <strong>{comboBurst}x streak</strong>
+              </div>
+              <span className="spark spark-1" />
+              <span className="spark spark-2" />
+              <span className="spark spark-3" />
+              <span className="spark spark-4" />
+            </div>
+          )}
         </section>
       )}
 
@@ -446,9 +577,11 @@ function App () {
         <section id="hacked-screen" className="screen hacked-screen active">
           <div className="hacked-content">
             <h1>YOU GOT HACKED</h1>
-            <p>Du gjorde 3 fel i rad. Din dator har blivit komprometterad.</p>
+            <p>Du gjorde 3 fel. Din dator har blivit komprometterad.</p>
             <button id="continue-btn" onClick={() => {
               setMistakes(0)
+              setActivePopups([])
+              setComboBurst(0)
               setFeedback('Systemet är rensat. Fortsätt försiktigt.')
               setScreen('game')
             }}>
@@ -514,6 +647,28 @@ function playSound (source: string) {
   void audio.play().catch(() => {
     // Browsers may block audio in rare cases; gameplay should continue either way.
   })
+}
+
+function createPopup (): ActivePopup {
+  const id = popupId++
+  const popup = popupImages[id % popupImages.length]
+
+  return {
+    id,
+    image: popup.image,
+    alt: popup.alt,
+    top: randomBetween(8, 70),
+    left: randomBetween(5, 72),
+    rotation: randomBetween(-7, 7),
+  }
+}
+
+function randomItem<T> (items: T[]) {
+  return items[Math.floor(Math.random() * items.length)]
+}
+
+function randomBetween (min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 export default App
