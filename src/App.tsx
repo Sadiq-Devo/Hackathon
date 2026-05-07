@@ -164,7 +164,7 @@ function App () {
   const [mistakes, setMistakes] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
-  const [timer, setTimer] = useState(90)
+  const [timer, setTimer] = useState(10)
   const [feedback, setFeedback] = useState('Feedback visas här.')
   const [activeFolder, setActiveFolder] = useState<Folder>('inbox')
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
@@ -698,8 +698,33 @@ function App () {
 
             <p>Rank:</p>
             <h2 id="rank">{rank}</h2>
-            <p className="final-message">{accuracy >= 80 ? 'Sharp work. You kept the inbox clean.' : 'Keep training. The next inbox will be easier to read.'}</p>
-            <button id="restart-btn" onClick={resetGame}>Play Again</button>
+            <p className="final-message">{accuracy >= 80 ? 'Sharp work. You kept the inbox clean.' 
+            : 'Keep training. The next inbox will be easier to read.'}
+            </p>
+           <input 
+           value = {playerName}
+            onChange={(e) => setPlayerName(e.target.value)}
+            placeholder="Enter your name for the leaderboard"
+            />
+            <button 
+            onClick={() => {
+              if (!playerName.trim()) return
+              const newLeaderboard = [...leaderboard, {name:playerName, score}]
+                setLeaderboard(newLeaderboard)
+                localStorage.setItem('leaderboard', JSON.stringify(newLeaderboard))
+                setPlayerName("")
+            }}
+            >
+              Save Score
+            </button>
+              <h2>Leaderboard</h2>
+              {leaderboard.map((player, index) => (
+                <p key = {index}>
+                  {index + 1}. {player.name} - {player.score}
+                </p>
+              ))}
+              <button id ="restart-btn" onClick={resetGame}>Play Again</button>
+         
           </div>
         </section>
       )}
