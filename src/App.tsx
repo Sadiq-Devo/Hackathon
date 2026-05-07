@@ -171,6 +171,7 @@ function App () {
   const [isReplying, setIsReplying] = useState(false)
   const [replyDraft, setReplyDraft] = useState('')
   const [playerName, setPlayerName] = useState('')
+  const [scoreSaved, setScoreSaved] = useState(false)
   const [leaderboard, setLeaderboard] = useState<{ name: string; score: number }[]>(
     () => JSON.parse(localStorage.getItem('leaderboard') ?? '[]')
   )
@@ -232,6 +233,7 @@ function App () {
     setActiveFolder('inbox')
     setSelectedEmployee(null)
     setPlayerName('')
+    setScoreSaved(false)
     setFeedback('Feedback visas här.')
     setScreen('start')
   }
@@ -307,6 +309,15 @@ function App () {
   const sendReply = () => {
     if (!selectedEmail || selectedEmail.done) return
     handleDecision('legit')
+  }
+
+  const handleSaveScore = () => {
+    if (!playerName.trim()) return
+    const updated = [...leaderboard, { name: playerName.trim(), score }]
+    setLeaderboard(updated)
+    localStorage.setItem('leaderboard', JSON.stringify(updated))
+    setPlayerName('')
+    setScoreSaved(true)
   }
 
   const nextSlide = () => {
@@ -680,7 +691,13 @@ function App () {
       {screen === 'end' && (
         <section id="end-screen" className="screen active">
           <div className="end-card">
-            <h1>Game Over</h1>
+            <div className="end-header">
+              <h1>Game Over</h1>
+              <div className="end-rank-badge">
+                <span className="end-rank-label">Rank</span>
+                <span className="end-rank-value">{rank}</span>
+              </div>
+            </div>
 
             <div className="final-grid">
               <div>
@@ -701,35 +718,58 @@ function App () {
               </div>
             </div>
 
-            <p>Rank:</p>
-            <h2 id="rank">{rank}</h2>
-            <p className="final-message">{accuracy >= 80 ? 'Sharp work. You kept the inbox clean.' 
-            : 'Keep training. The next inbox will be easier to read.'}
+            <p className="final-message">
+              {accuracy >= 80 ? 'Sharp work. You kept the inbox clean.' : 'Keep training. The next inbox will be easier to read.'}
             </p>
-           <input 
-           value = {playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
-            placeholder="Enter your name for the leaderboard"
-            />
-            <button 
-            onClick={() => {
-              if (!playerName.trim()) return
-              const newLeaderboard = [...leaderboard, {name:playerName, score}]
-                setLeaderboard(newLeaderboard)
-                localStorage.setItem('leaderboard', JSON.stringify(newLeaderboard))
-                setPlayerName("")
-            }}
-            >
-              Save Score
-            </button>
-              <h2>Leaderboard</h2>
-              {leaderboard.map((player, index) => (
-                <p key = {index}>
-                  {index + 1}. {player.name} - {player.score}
-                </p>
-              ))}
-              <button id ="restart-btn" onClick={resetGame}>Play Again</button>
-         
+
+            {!scoreSaved ? (
+              <div className="end-save-section">
+                <p className="end-save-label">Save your score to the leaderboard</p>
+                <div className="end-save-row">
+                  <input
+                    className="end-name-input"
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveScore()}
+                    placeholder="Your name..."
+                    maxLength={20}
+                  />
+                  <button
+                    className="end-save-btn"
+                    onClick={handleSaveScore}
+                    disabled={!playerName.trim()}
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="end-saved-confirm">
+                ✓ Score saved!
+              </div>
+            )}
+
+            {leaderboard.length > 0 && (
+              <div className="end-leaderboard">
+                <h3>Leaderboard</h3>
+                <div className="leaderboard-list">
+                  {[...leaderboard]
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 10)
+                    .map((player, index) => (
+                      <div className={`leaderboard-row ${index < 3 ? `top-${index + 1}` : ''}`} key={index}>
+                        <span className="lb-rank">
+                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                        </span>
+                        <span className="lb-name">{player.name}</span>
+                        <span className="lb-score">{player.score}</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            <button id="restart-btn" onClick={resetGame}>Play Again</button>
           </div>
         </section>
       )}
