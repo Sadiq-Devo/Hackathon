@@ -131,7 +131,6 @@ function App () {
     () => JSON.parse(localStorage.getItem('leaderboard') ?? '[]')
   )
   const [musicOn, setMusicOn] = useState(false)
-  const [showMenuLeaderboard, setShowMenuLeaderboard] = useState(false)
   const musicRef = useRef<HTMLAudioElement | null>(null)
 
   const selectedEmail = emails.find((email) => email.id === selectedId) ?? null
@@ -448,43 +447,10 @@ function App () {
         <section id="start-screen" className="screen active menu-3d-screen">
           <MenuScene
             onStartGame={startGame}
-            onShowLeaderboard={() => setShowMenuLeaderboard(true)}
+            leaderboard={leaderboard}
             musicOn={musicOn}
             onToggleMusic={toggleMusic}
           />
-
-          {showMenuLeaderboard && (
-            <div className="menu-leaderboard-overlay" onClick={() => setShowMenuLeaderboard(false)}>
-              <div className="menu-leaderboard-modal" onClick={(e) => e.stopPropagation()}>
-                <button
-                  className="menu-leaderboard-close"
-                  onClick={() => setShowMenuLeaderboard(false)}
-                  type="button"
-                >
-                  ×
-                </button>
-                <h2>Leaderboard</h2>
-                {leaderboard.length === 0 ? (
-                  <p className="menu-leaderboard-empty">No scores yet. Be the first.</p>
-                ) : (
-                  <div className="leaderboard-list">
-                    {[...leaderboard]
-                      .sort((a, b) => b.score - a.score)
-                      .slice(0, 10)
-                      .map((player, index) => (
-                        <div className={`leaderboard-row ${index < 3 ? `top-${index + 1}` : ''}`} key={index}>
-                          <span className="lb-rank">
-                            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                          </span>
-                          <span className="lb-name">{player.name}</span>
-                          <span className="lb-score">{player.score}</span>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </section>
       )}
 
