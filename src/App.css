@@ -1035,6 +1035,8 @@ button:disabled {
 
 .delete-icon-btn.first-action-pulse {
   animation: delete-action-pulse 1.8s ease-in-out infinite;
+}
+
 .trash-icon {
   width: 26px;
   height: 26px;
