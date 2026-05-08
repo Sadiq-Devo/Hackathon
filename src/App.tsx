@@ -1,14 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { emailTemplates, type Email, type EmailType } from './data/emailTemplates'
 import './App.css'
+import backgroundMusic from './assets/audio/BackgroundMusic.mp3'
 import correctSound from './assets/audio/Correct.mp3'
+import gameOverMusic from './assets/audio/go-music.mp3'
+import glitchSound from './assets/audio/Glitch.mp3'
+import hoverSound from './assets/audio/Hover.mp3'
 import incorrectSound from './assets/audio/Incorrect.mp3'
 import mouseClickSound from './assets/audio/Mouseclick.mp3'
 import popSound from './assets/audio/Pop.mp3'
-import boomImage from './assets/effects/Boom.avif'
+import streakEffectSound from './assets/audio/Streakeffect.mp3'
+import streakOhYeahSound from './assets/audio/Streakohyeah.mp3'
 import fishGif from './assets/effects/Fish.gif'
 import heartEmpty from './assets/effects/heart_empty.png'
 import heartFull from './assets/effects/heart_full.png'
+import losingScreen from './assets/effects/lost.png'
 import popup1 from './assets/effects/Popup1.jpg'
 import popup2 from './assets/effects/Popup2.gif'
 import popup3 from './assets/effects/Popup3.gif'
@@ -16,9 +22,14 @@ import popup4 from './assets/effects/Popup4.png'
 import popup5 from './assets/effects/Popup5.jpeg'
 import popup6 from './assets/effects/Popup6.png'
 import popup7 from './assets/effects/Popup7.webp'
-import popup8 from './assets/effects/Popup8.jpg'
+import popup8 from './assets/effects/Popup8.jpeg'
 import popup9 from './assets/effects/Popup9.webp'
 import popup10 from './assets/effects/Popup10.jpg'
+import streak1 from './assets/effects/Streak1.png'
+import streak2 from './assets/effects/Streak2.png'
+import streak3 from './assets/effects/Streak3.png'
+import streak4 from './assets/effects/Streak4.png'
+import streak5 from './assets/effects/Streak5.png'
 
 type Screen = 'intro' | 'start' | 'game' | 'hacked' | 'end'
 type Folder = 'inbox' | 'trash' | 'org'
@@ -58,9 +69,13 @@ const popupImages = [
   { image: popup10, alt: 'Suspicious popup 10' },
 ]
 
+const streakImages = [streak1, streak2, streak3, streak4, streak5]
+
 const popupDelays = [3000, 5000, 7000]
 const maxHearts = 3
 const EMAILS_PER_ROUND = 10
+const gameplayMusicVolume = 0.2
+const gameOverMusicVolume = 0.34
 let popupId = 0
 
 const slides = [
@@ -198,6 +213,7 @@ const employees: Employee[] = [
 ]
 
 function App () {
+  const gameMusicRef = useRef<HTMLAudioElement | null>(null)
   const [screen, setScreen] = useState<Screen>('intro')
   const [slideIndex, setSlideIndex] = useState(0)
   const [emails, setEmails] = useState<Email[]>(() => createInbox())
@@ -211,6 +227,8 @@ function App () {
   const [feedback, setFeedback] = useState('Feedback visas här.')
   const [activePopups, setActivePopups] = useState<ActivePopup[]>([])
   const [comboBurst, setComboBurst] = useState(0)
+  const [comboImage, setComboImage] = useState(streak1)
+  const [isLosingTransition, setIsLosingTransition] = useState(false)
   const [activeFolder, setActiveFolder] = useState<Folder>('inbox')
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [isReplying, setIsReplying] = useState(false)
@@ -241,6 +259,15 @@ function App () {
   useEffect(() => {
     if (screen !== 'game') return
 
+    const music = new Audio(backgroundMusic)
+    music.loop = true
+    music.volume = 0
+    gameMusicRef.current = music
+    void music.play().catch(() => {
+      // Gameplay continues if the browser waits for a user gesture.
+    })
+    fadeAudio(music, gameplayMusicVolume, 900)
+
     const interval = window.setInterval(() => {
       setTimer((current) => {
         if (current <= 1) {
@@ -253,8 +280,22 @@ function App () {
       })
     }, 1000)
 
-    return () => window.clearInterval(interval)
+    return () => {
+      window.clearInterval(interval)
+      fadeAudio(music, 0, 450, () => {
+        music.pause()
+        music.currentTime = 0
+      })
+      if (gameMusicRef.current === music) gameMusicRef.current = null
+    }
   }, [screen])
+
+  useEffect(() => {
+    const music = gameMusicRef.current
+    if (!music) return
+
+    fadeAudio(music, isLosingTransition ? 0.05 : gameplayMusicVolume, 500)
+  }, [isLosingTransition])
 
   useEffect(() => {
     if (screen !== 'game' || mistakes < 1 || activePopups.length >= popupImages.length) return
@@ -264,7 +305,7 @@ function App () {
       setActivePopups((current) => {
         if (current.length >= popupImages.length) return current
 
-        playSound(popSound)
+        playSound(popSound, 0.42)
         return [...current, createPopup()]
       })
     }, delay)
@@ -279,12 +320,33 @@ function App () {
     return () => window.clearTimeout(timeout)
   }, [comboBurst])
 
+  useEffect(() => {
+    if (screen !== 'hacked') return
+
+    const music = new Audio(gameOverMusic)
+    music.loop = true
+    music.volume = 0
+    void music.play().catch(() => {
+      // The hacked screen still works if the browser blocks autoplay.
+    })
+    fadeAudio(music, gameOverMusicVolume, 1000)
+
+    return () => {
+      fadeAudio(music, 0, 500, () => {
+        music.pause()
+        music.currentTime = 0
+      })
+    }
+  }, [screen])
+
   const startGame = () => {
     setEmails(createInbox())
     setScreen('game')
     setSelectedId(null)
     setActivePopups([])
     setComboBurst(0)
+    setComboImage(randomItem(streakImages))
+    setIsLosingTransition(false)
     setIsReplying(false)
     setReplyDraft('')
     setFeedback('Klicka på ett mejl och välj rätt åtgärd.')
@@ -301,6 +363,8 @@ function App () {
     setTimer(90)
     setActivePopups([])
     setComboBurst(0)
+    setComboImage(randomItem(streakImages))
+    setIsLosingTransition(false)
     setIsReplying(false)
     setReplyDraft('')
     setActiveFolder('inbox')
@@ -316,6 +380,7 @@ function App () {
     setSelectedId(null)
     setActivePopups([])
     setComboBurst(0)
+    setComboImage(randomItem(streakImages))
     setMistakes(0)
     setIsReplying(false)
     setReplyDraft('')
@@ -327,7 +392,7 @@ function App () {
   }
 
   const openEmail = (email: Email) => {
-    playSound(mouseClickSound)
+    playSound(mouseClickSound, 0.34)
     setSelectedId(email.id)
     setIsReplying(false)
     setReplyDraft('')
@@ -356,7 +421,7 @@ function App () {
     const isFinalEmail = emails.filter((email) => !email.done).length === 1
     const difficultyBonus = selectedEmail.difficulty === 'hard' ? 40 : selectedEmail.difficulty === 'medium' ? 25 : 10
 
-    playSound(isCorrect ? correctSound : incorrectSound)
+    playSound(isCorrect ? correctSound : incorrectSound, isCorrect ? 0.62 : 0.56)
 
     setEmails((current) => current.map((email) => (
       email.id === selectedEmail.id ? { ...email, done: true, read: true } : email
@@ -368,7 +433,11 @@ function App () {
       const nextStreak = streak + 1
       setScore((current) => current + 75 + difficultyBonus + nextStreak * 5)
       setStreak(nextStreak)
-      if (nextStreak >= 3) setComboBurst(nextStreak)
+      if (nextStreak >= 3) {
+        setComboBurst(nextStreak)
+        setComboImage(randomItem(streakImages))
+        playStreakSounds()
+      }
       setCorrectCount((current) => current + 1)
       setFeedback(`Rätt! ${selectedEmail.hint}`)
       if (isFinalEmail) window.setTimeout(() => setScreen('end'), 900)
@@ -384,9 +453,14 @@ function App () {
     setFeedback(`Fel. Det här mejlet var ${labelForType(selectedEmail.type)}. ${selectedEmail.hint}`)
 
     if (nextMistakes >= 3) {
-      window.setTimeout(() => setScreen('hacked'), 600)
+      playSound(glitchSound, 0.72)
+      setIsLosingTransition(true)
+      window.setTimeout(() => {
+        setIsLosingTransition(false)
+        setScreen('hacked')
+      }, 2400)
     } else if (nextMistakes === 1) {
-      playSound(popSound)
+      playSound(popSound, 0.42)
       setActivePopups([createPopup()])
     } else if (isFinalEmail) {
       window.setTimeout(() => setScreen('end'), 900)
@@ -763,7 +837,7 @@ function App () {
 
           {comboBurst >= 3 && (
             <div className="combo-burst" aria-live="polite">
-              <img className="combo-boom" src={boomImage} alt="" aria-hidden="true" />
+              <img className="combo-boom" src={comboImage} alt="" aria-hidden="true" />
               <div className="combo-text">
                 <strong>{comboBurst}x streak</strong>
               </div>
@@ -773,30 +847,42 @@ function App () {
               <span className="spark spark-4" />
             </div>
           )}
+
+          {isLosingTransition && (
+            <div className="losing-transition" aria-live="assertive">
+              <div className="losing-transition-panel">
+                <span>Signal Lost</span>
+                <strong>System Failure</strong>
+                <small>Critical breach detected</small>
+              </div>
+            </div>
+          )}
         </section>
       )}
 
       {screen === 'hacked' && (
-        <section id="hacked-screen" className="screen hacked-screen active">
+        <section
+          id="hacked-screen"
+          className="screen hacked-screen active"
+          style={{ backgroundImage: `url("${losingScreen}")` }}
+        >
           <div className="hacked-content">
-            <h1>YOU GOT HACKED</h1>
-            <p>Du gjorde 3 fel. Din dator har blivit komprometterad.</p>
-            <button id="continue-btn" onClick={() => {
-              setMistakes(0)
-              setActivePopups([])
-              setComboBurst(0)
-              setFeedback('Systemet är rensat. Fortsätt försiktigt.')
-              setScreen('game')
-            }}>
-              Clean System
+            <button
+              id="continue-btn"
+              onClick={() => {
+                setMistakes(0)
+                setActivePopups([])
+                setComboBurst(0)
+                setComboImage(randomItem(streakImages))
+                setIsLosingTransition(false)
+                setFeedback('Systemet är rensat. Fortsätt försiktigt.')
+                setScreen('game')
+              }}
+              onMouseEnter={() => playSound(hoverSound, 0.36)}
+            >
+              <span>Clean System</span>
             </button>
           </div>
-
-          <div className="popup popup-1">Warning: Malware detected!</div>
-          <div className="popup popup-2">Your password has leaked!</div>
-          <div className="popup popup-3">Suspicious login detected!</div>
-          <div className="popup popup-4">System infected!</div>
-          <div className="popup popup-5">Ads are taking over!</div>
         </section>
       )}
 
@@ -945,17 +1031,57 @@ function capitalize (value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-function playSound (source: string) {
+function playSound (source: string, volume = 0.5) {
   const audio = new Audio(source)
   audio.currentTime = 0
+  audio.volume = volume
   void audio.play().catch(() => {
     // Browsers may block audio in rare cases; gameplay should continue either way.
   })
 }
 
+function playStreakSounds () {
+  const first = new Audio(streakEffectSound)
+  const second = new Audio(streakOhYeahSound)
+  first.volume = 0.66
+  second.volume = 0.74
+
+  first.addEventListener('ended', () => {
+    void second.play().catch(() => {
+      // Streak visuals still carry the feedback if playback is blocked.
+    })
+  }, { once: true })
+
+  void first.play().catch(() => {
+    void second.play().catch(() => {
+      // Streak visuals still carry the feedback if playback is blocked.
+    })
+  })
+}
+
+function fadeAudio (audio: HTMLAudioElement, targetVolume: number, duration: number, onComplete?: () => void) {
+  const startVolume = audio.volume
+  const startTime = performance.now()
+
+  const step = (currentTime: number) => {
+    const progress = Math.min((currentTime - startTime) / duration, 1)
+    audio.volume = startVolume + (targetVolume - startVolume) * progress
+
+    if (progress < 1) {
+      window.requestAnimationFrame(step)
+      return
+    }
+
+    audio.volume = targetVolume
+    onComplete?.()
+  }
+
+  window.requestAnimationFrame(step)
+}
+
 function createPopup (): ActivePopup {
   const id = popupId++
-  const popup = popupImages[id % popupImages.length]
+  const popup = randomItem(popupImages)
 
   return {
     id,
