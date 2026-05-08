@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { emailTemplates, type Email, type EmailType } from './data/emailTemplates'
 import { employees, type Employee } from './data/employees'
 import { generateAiEmail, pickFallbackEmail } from './services/aiEmailGenerator'
@@ -12,8 +12,14 @@ import hoverSound from './assets/audio/Hover.mp3'
 import incorrectSound from './assets/audio/Incorrect.mp3'
 import mouseClickSound from './assets/audio/Mouseclick.mp3'
 import popSound from './assets/audio/Pop.mp3'
-import streakEffectSound from './assets/audio/Streakeffect.mp3'
+import cashSound from './assets/audio/Cash.mp3'
+import greatSound from './assets/audio/Great.mp3'
+import holyCowSound from './assets/audio/Holycow.mp3'
+import legendrySound from './assets/audio/Legendry.mp3'
+import phenomnalSound from './assets/audio/Phenomnal.mp3'
+import splendidSound from './assets/audio/Splendid.mp3'
 import streakOhYeahSound from './assets/audio/Streakohyeah.mp3'
+import streakWowSound from './assets/audio/Streakwow.mp3'
 import notificationSound from './assets/audio/Notification.mp3'
 import fishGif from './assets/effects/Fish.gif'
 import heartEmpty from './assets/effects/heart_empty.png'
@@ -61,6 +67,16 @@ const popupImages = [
 ]
 
 const streakImages = [streak1, streak2, streak3, streak4, streak5]
+const streakSounds = [
+  cashSound,
+  greatSound,
+  holyCowSound,
+  legendrySound,
+  phenomnalSound,
+  splendidSound,
+  streakWowSound,
+  streakOhYeahSound,
+]
 
 const popupDelays = [3000, 5000, 7000]
 const maxHearts = 3
@@ -105,8 +121,23 @@ const replyTemplates = [
   'Sounds good, thanks for the message.',
 ]
 
+const tutorialEmail: Email = {
+  id: -1,
+  from: 'p.nair@nexus-solutions.com',
+  subject: 'Start here: how to clear your inbox',
+  body: 'Welcome to Phish Fighter.\n\n1. Click an email in the inbox list on the left.\n2. Read the sender, subject, message, links, and attachments in the preview.\n3. If the email looks safe, press Reply, then Send.\n4. If it looks suspicious, press the trash/delete button to report it as phishing.\n5. Use the Organization tab to check if a sender belongs to Nexus Solutions.\n\nThis tutorial email is legitimate. Press Reply, then Send to clear it.',
+  type: 'legit',
+  difficulty: 'easy',
+  senderEmployeeId: 'priya',
+  hint: 'Tutorial-mailet kommer från Priyas riktiga Nexus-adress och säger tydligt hur du spelar.',
+  wrongFeedback: 'Du rapporterade själva tutorialen. Modigt, men fel knapp.',
+}
+
 function App () {
   const gameMusicRef = useRef<HTMLAudioElement | null>(null)
+  const gameOverMusicRef = useRef<HTMLAudioElement | null>(null)
+  const gameMusicTokenRef = useRef(0)
+  const gameOverMusicTokenRef = useRef(0)
   const [screen, setScreen] = useState<Screen>('start')
   const [emails, setEmails] = useState<Email[]>(() => createInbox())
   const [selectedId, setSelectedId] = useState<number | null>(null)
@@ -120,7 +151,10 @@ function App () {
   const [activePopups, setActivePopups] = useState<ActivePopup[]>([])
   const [comboBurst, setComboBurst] = useState(0)
   const [comboImage, setComboImage] = useState(streak1)
+  const [correctBurst, setCorrectBurst] = useState(0)
   const [isLosingTransition, setIsLosingTransition] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
+  const [pauseMenuOpen, setPauseMenuOpen] = useState(false)
   const [activeFolder, setActiveFolder] = useState<Folder>('inbox')
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [isReplying, setIsReplying] = useState(false)
@@ -130,8 +164,7 @@ function App () {
   const [leaderboard, setLeaderboard] = useState<{ name: string; score: number }[]>(
     () => JSON.parse(localStorage.getItem('leaderboard') ?? '[]')
   )
-  const [musicOn, setMusicOn] = useState(false)
-  const musicRef = useRef<HTMLAudioElement | null>(null)
+  const [musicOn, setMusicOn] = useState(true)
   const [hasShownFirstActionPulse, setHasShownFirstActionPulse] = useState(false)
   const [showFirstActionPulse, setShowFirstActionPulse] = useState(false)
 
@@ -152,17 +185,71 @@ function App () {
     return total === 0 ? 0 : Math.round((correctCount / total) * 100)
   }, [correctCount, wrongCount])
 
-  useEffect(() => {
-    if (screen !== 'game') return
+  const startGameplayMusic = useCallback((force = false) => {
+    if (!force && !musicOn) return
 
-    const music = new Audio(backgroundMusic)
-    music.loop = true
-    music.volume = 0
-    gameMusicRef.current = music
+    gameMusicTokenRef.current += 1
+    let music = gameMusicRef.current
+
+    if (!music) {
+      music = new Audio(backgroundMusic)
+      music.loop = true
+      music.volume = 0
+      gameMusicRef.current = music
+    }
+
     void music.play().catch(() => {
-      // Gameplay continues if the browser waits for a user gesture.
+      // Gameplay continues if the browser waits for another user gesture.
     })
     fadeAudio(music, gameplayMusicVolume, 900)
+  }, [musicOn])
+
+  const pauseGameplayMusic = useCallback(() => {
+    const music = gameMusicRef.current
+    if (!music) return
+
+    gameMusicTokenRef.current += 1
+    const token = gameMusicTokenRef.current
+    fadeAudio(music, 0, 250, () => {
+      if (gameMusicTokenRef.current !== token) return
+      music.pause()
+    })
+  }, [])
+
+  const startGameOverMusic = useCallback((force = false) => {
+    if (!force && !musicOn) return
+
+    gameOverMusicTokenRef.current += 1
+    let music = gameOverMusicRef.current
+
+    if (!music) {
+      music = new Audio(gameOverMusic)
+      music.loop = true
+      music.volume = 0
+      gameOverMusicRef.current = music
+    }
+
+    void music.play().catch(() => {
+      // The hacked screen still works if the browser blocks autoplay.
+    })
+    fadeAudio(music, gameOverMusicVolume, 1000)
+  }, [musicOn])
+
+  const pauseGameOverMusic = useCallback(() => {
+    const music = gameOverMusicRef.current
+    if (!music) return
+
+    gameOverMusicTokenRef.current += 1
+    const token = gameOverMusicTokenRef.current
+    fadeAudio(music, 0, 500, () => {
+      if (gameOverMusicTokenRef.current !== token) return
+      music.pause()
+      music.currentTime = 0
+    })
+  }, [])
+
+  useEffect(() => {
+    if (screen !== 'game' || isPaused) return
 
     const interval = window.setInterval(() => {
       setTimer((current) => {
@@ -180,23 +267,27 @@ function App () {
 
     return () => {
       window.clearInterval(interval)
-      fadeAudio(music, 0, 450, () => {
-        music.pause()
-        music.currentTime = 0
-      })
-      if (gameMusicRef.current === music) gameMusicRef.current = null
     }
-  }, [screen])
+  }, [screen, isPaused])
+
+  useEffect(() => {
+    if ((screen === 'start' || (screen === 'game' && !isPaused)) && musicOn) {
+      startGameplayMusic(true)
+      return
+    }
+
+    pauseGameplayMusic()
+  }, [screen, isPaused, musicOn, pauseGameplayMusic, startGameplayMusic])
 
   useEffect(() => {
     const music = gameMusicRef.current
     if (!music) return
 
-    fadeAudio(music, isLosingTransition ? 0.05 : gameplayMusicVolume, 500)
-  }, [isLosingTransition])
+    fadeAudio(music, !musicOn || (screen === 'game' && isPaused) ? 0 : isLosingTransition ? 0.05 : gameplayMusicVolume, 500)
+  }, [isLosingTransition, isPaused, musicOn, screen])
 
   useEffect(() => {
-    if (screen !== 'game') return
+    if (screen !== 'game' || isPaused) return
 
     const controller = new AbortController()
     let cancelled = false
@@ -213,11 +304,13 @@ function App () {
         if (cancelled) return
 
         if (aiEmail) {
+          playSound(notificationSound, 0.38)
           setEmails((current) => [aiEmail, ...current])
         } else {
           setEmails((current) => {
             const usedIds = new Set(current.map((e) => e.id))
             const fallback = pickFallbackEmail(usedIds)
+            if (fallback) playSound(notificationSound, 0.38)
             return fallback ? [fallback, ...current] : current
           })
         }
@@ -233,10 +326,10 @@ function App () {
       controller.abort()
       if (timeoutId !== null) window.clearTimeout(timeoutId)
     }
-  }, [screen])
+  }, [screen, isPaused])
 
   useEffect(() => {
-    if (screen !== 'game' || mistakes < 1 || activePopups.length >= popupImages.length) return
+    if (screen !== 'game' || isPaused || mistakes < 1 || activePopups.length >= popupImages.length) return
 
     const delay = randomItem(popupDelays)
     const timeout = window.setTimeout(() => {
@@ -249,7 +342,7 @@ function App () {
     }, delay)
 
     return () => window.clearTimeout(timeout)
-  }, [activePopups.length, mistakes, screen])
+  }, [activePopups.length, mistakes, screen, isPaused])
 
   useEffect(() => {
     if (comboBurst === 0) return
@@ -259,48 +352,50 @@ function App () {
   }, [comboBurst])
 
   useEffect(() => {
-    if (screen !== 'hacked') return
+    if (correctBurst === 0) return
 
-    const music = new Audio(gameOverMusic)
-    music.loop = true
-    music.volume = 0
-    void music.play().catch(() => {
-      // The hacked screen still works if the browser blocks autoplay.
-    })
-    fadeAudio(music, gameOverMusicVolume, 1000)
-
-    return () => {
-      fadeAudio(music, 0, 500, () => {
-        music.pause()
-        music.currentTime = 0
-      })
-    }
-  }, [screen])
+    const timeout = window.setTimeout(() => setCorrectBurst(0), 850)
+    return () => window.clearTimeout(timeout)
+  }, [correctBurst])
 
   useEffect(() => {
-    if (musicOn) {
-      if (!musicRef.current) {
-        const audio = new Audio(notificationSound)
-        audio.loop = true
-        audio.volume = 0.25
-        musicRef.current = audio
-      }
-      void musicRef.current.play().catch(() => {})
-    } else if (musicRef.current) {
-      musicRef.current.pause()
+    if (screen === 'hacked' && musicOn) {
+      startGameOverMusic(true)
+      return
     }
-  }, [musicOn])
 
-  const toggleMusic = () => setMusicOn((current) => !current)
+    pauseGameOverMusic()
+  }, [screen, musicOn, pauseGameOverMusic, startGameOverMusic])
+
+  const toggleMusic = () => {
+    setMusicOn((current) => {
+      const next = !current
+
+      if (next) {
+        if (screen === 'start') startGameplayMusic(true)
+        if (screen === 'game' && !isPaused) startGameplayMusic(true)
+        if (screen === 'hacked') startGameOverMusic(true)
+      } else {
+        pauseGameplayMusic()
+        pauseGameOverMusic()
+      }
+
+      return next
+    })
+  }
 
   const startGame = () => {
+    startGameplayMusic()
     setEmails(createInbox())
     setScreen('game')
     setSelectedId(null)
     setActivePopups([])
     setComboBurst(0)
     setComboImage(randomItem(streakImages))
+    setCorrectBurst(0)
     setIsLosingTransition(false)
+    setIsPaused(false)
+    setPauseMenuOpen(false)
     setIsReplying(false)
     setReplyDraft('')
     setFeedback('Klicka på ett mejl och välj rätt åtgärd.')
@@ -318,7 +413,10 @@ function App () {
     setActivePopups([])
     setComboBurst(0)
     setComboImage(randomItem(streakImages))
+    setCorrectBurst(0)
     setIsLosingTransition(false)
+    setIsPaused(false)
+    setPauseMenuOpen(false)
     setIsReplying(false)
     setReplyDraft('')
     setActiveFolder('inbox')
@@ -337,7 +435,32 @@ function App () {
     setShowFirstActionPulse(false)
   }
 
+  const pauseGame = () => {
+    setIsPaused(true)
+    pauseGameplayMusic()
+  }
+
+  const resumeGame = () => {
+    setIsPaused(false)
+    startGameplayMusic()
+    setPauseMenuOpen(false)
+  }
+
+  const exitToMenu = () => {
+    pauseGameplayMusic()
+    setIsPaused(false)
+    setPauseMenuOpen(false)
+    setActivePopups([])
+    setComboBurst(0)
+    setCorrectBurst(0)
+    setIsReplying(false)
+    setReplyDraft('')
+    setSelectedEmployee(null)
+    setScreen('start')
+  }
+
   const openEmail = (email: Email) => {
+    if (isPaused) return
     playSound(mouseClickSound, 0.34)
     setSelectedId(email.id)
     setIsReplying(false)
@@ -354,7 +477,7 @@ function App () {
   }
 
   const startReply = () => {
-    if (!selectedEmail || selectedEmail.done) return
+    if (isPaused || !selectedEmail || selectedEmail.done) return
     setIsReplying(true)
     setReplyDraft(createReplyDraft(selectedEmail))
   }
@@ -365,7 +488,7 @@ function App () {
   }
 
   const handleDecision = (choice: EmailType) => {
-    if (!selectedEmail || selectedEmail.done) return
+    if (isPaused || !selectedEmail || selectedEmail.done) return
     if (showFirstActionPulse) stopFirstActionPulse()
 
     const isCorrect = choice === selectedEmail.type
@@ -383,6 +506,7 @@ function App () {
       const nextStreak = streak + 1
       setScore((current) => current + 75 + difficultyBonus + nextStreak * 5)
       setStreak(nextStreak)
+      setCorrectBurst((current) => current + 1)
       if (nextStreak >= 3) {
         setComboBurst(nextStreak)
         setComboImage(randomItem(streakImages))
@@ -397,6 +521,7 @@ function App () {
     setScore((current) => Math.max(0, current - 35))
     setStreak(0)
     setComboBurst(0)
+    setCorrectBurst(0)
     setMistakes(nextMistakes)
     setWrongCount((current) => current + 1)
     const flavor = selectedEmail.wrongFeedback ? ` ${selectedEmail.wrongFeedback}` : ''
@@ -458,6 +583,7 @@ function App () {
         <section id="start-screen" className="screen active menu-3d-screen">
           <MenuScene
             onStartGame={startGame}
+            onPrimeGameAudio={startGameplayMusic}
             leaderboard={leaderboard}
             musicOn={musicOn}
             onToggleMusic={toggleMusic}
@@ -466,7 +592,7 @@ function App () {
       )}
 
       {screen === 'game' && (
-        <section id="game-screen" className={`screen active laptop-pov ${mistakes >= 1 ? 'infection-level-1' : ''} ${mistakes >= 2 ? 'infection-level-2' : ''}`}>
+        <section id="game-screen" className={`screen active laptop-pov ${isPaused ? 'game-paused' : ''} ${mistakes >= 1 ? 'infection-level-1' : ''} ${mistakes >= 2 ? 'infection-level-2' : ''}`}>
           <div className="laptop-bezel" aria-hidden="true">
             <div className="laptop-bezel-top" />
             <div className="laptop-bezel-left" />
@@ -479,7 +605,52 @@ function App () {
           <div className="gmail-layout">
             <header className="gmail-topbar">
               <div className="gmail-brand">
-                <button className="icon-btn" aria-label="Menu">☰</button>
+                <div className="game-menu-wrap">
+                  <button
+                    className="icon-btn"
+                    aria-expanded={pauseMenuOpen}
+                    aria-label="Game menu"
+                    onClick={() => setPauseMenuOpen((current) => !current)}
+                    type="button"
+                  >
+                    ☰
+                  </button>
+                  {pauseMenuOpen && (
+                    <div className="game-menu-popover" role="menu">
+                      <button
+                        disabled={!isPaused}
+                        onClick={resumeGame}
+                        role="menuitem"
+                        type="button"
+                      >
+                        Play
+                      </button>
+                      <button
+                        disabled={isPaused}
+                        onClick={pauseGame}
+                        role="menuitem"
+                        type="button"
+                      >
+                        Pause
+                      </button>
+                      <button
+                        onClick={toggleMusic}
+                        role="menuitem"
+                        type="button"
+                      >
+                        Music: {musicOn ? 'On' : 'Off'}
+                      </button>
+                      <button
+                        className="exit-menu-btn"
+                        onClick={exitToMenu}
+                        role="menuitem"
+                        type="button"
+                      >
+                        Exit to Menu
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="gmail-logo-mark" aria-label="Phish Fighter Mail fish logo">
                   <svg className="logo-fish-icon" viewBox="0 0 64 48" aria-hidden="true" focusable="false">
                     <path className="logo-tail" d="M8 15l15 9L8 33l5-9z" />
@@ -835,6 +1006,18 @@ function App () {
             </div>
           )}
 
+          {correctBurst > 0 && (
+            <div className="correct-burst" aria-live="polite" key={correctBurst}>
+              <div className="correct-ring" />
+              <div className="correct-mark">✓</div>
+              <strong>Correct</strong>
+              <span className="correct-spark correct-spark-1" />
+              <span className="correct-spark correct-spark-2" />
+              <span className="correct-spark correct-spark-3" />
+              <span className="correct-spark correct-spark-4" />
+            </div>
+          )}
+
           {isLosingTransition && (
             <div className="losing-transition" aria-live="assertive">
               <div className="losing-transition-panel">
@@ -842,6 +1025,12 @@ function App () {
                 <strong>System Failure</strong>
                 <small>Critical breach detected</small>
               </div>
+            </div>
+          )}
+
+          {isPaused && (
+            <div className="pause-badge" aria-live="polite">
+              Paused
             </div>
           )}
         </section>
@@ -857,6 +1046,7 @@ function App () {
             <button
               id="continue-btn"
               onClick={() => {
+                startGameplayMusic()
                 setMistakes(0)
                 setActivePopups([])
                 setComboBurst(0)
@@ -1042,22 +1232,7 @@ function playSound (source: string, volume = 0.5) {
 }
 
 function playStreakSounds () {
-  const first = new Audio(streakEffectSound)
-  const second = new Audio(streakOhYeahSound)
-  first.volume = 0.66
-  second.volume = 0.74
-
-  first.addEventListener('ended', () => {
-    void second.play().catch(() => {
-      // Streak visuals still carry the feedback if playback is blocked.
-    })
-  }, { once: true })
-
-  void first.play().catch(() => {
-    void second.play().catch(() => {
-      // Streak visuals still carry the feedback if playback is blocked.
-    })
-  })
+  playSound(randomItem(streakSounds), 0.72)
 }
 
 function fadeAudio (audio: HTMLAudioElement, targetVolume: number, duration: number, onComplete?: () => void) {
@@ -1133,10 +1308,15 @@ function createReplyDraft (email: Email) {
 }
 
 function createInbox () {
-  return [...emailTemplates]
+  const randomEmails = [...emailTemplates]
     .sort(() => Math.random() - 0.5)
     .slice(0, INITIAL_INBOX_SIZE)
     .map((email) => ({ ...email, done: false, read: false }))
+
+  return [
+    { ...tutorialEmail, done: false, read: false },
+    ...randomEmails,
+  ]
 }
 
 export default App

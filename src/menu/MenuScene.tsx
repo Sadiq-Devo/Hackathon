@@ -9,6 +9,7 @@ import { playBootSound } from './bootAudio'
 
 type Props = {
   onStartGame: () => void
+  onPrimeGameAudio: () => void
   leaderboard: LeaderboardEntry[]
   musicOn: boolean
   onToggleMusic: () => void
@@ -39,6 +40,7 @@ function CameraRig ({
   const { camera } = useThree()
   const targetRef = useRef(new Vector3())
 
+  /* eslint-disable react-hooks/immutability */
   useFrame((state) => {
     const t = state.clock.elapsedTime
 
@@ -70,11 +72,12 @@ function CameraRig ({
       camera.updateProjectionMatrix()
     }
   })
+  /* eslint-enable react-hooks/immutability */
 
   return null
 }
 
-export function MenuScene ({ onStartGame, leaderboard, musicOn, onToggleMusic }: Props) {
+export function MenuScene ({ onStartGame, onPrimeGameAudio, leaderboard, musicOn, onToggleMusic }: Props) {
   const [phase, setPhase] = useState<Phase>('off')
   const [zoomFrame, setZoomFrame] = useState(0)
   const [startTransition, setStartTransition] = useState(false)
@@ -84,6 +87,7 @@ export function MenuScene ({ onStartGame, leaderboard, musicOn, onToggleMusic }:
   const handlePowerOn = () => {
     if (phase !== 'off') return
     playBootSound()
+    onPrimeGameAudio()
     setPhase('zooming')
     startTimeRef.current = performance.now()
 
@@ -103,6 +107,7 @@ export function MenuScene ({ onStartGame, leaderboard, musicOn, onToggleMusic }:
   }
 
   const handleStartGame = () => {
+    onPrimeGameAudio()
     setStartTransition(true)
     window.setTimeout(() => onStartGame(), 600)
   }
