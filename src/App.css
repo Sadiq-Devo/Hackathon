@@ -1033,6 +1033,8 @@ button:disabled {
   transform: scale(1.05);
 }
 
+.delete-icon-btn.first-action-pulse {
+  animation: delete-action-pulse 1.8s ease-in-out infinite;
 .trash-icon {
   width: 26px;
   height: 26px;
@@ -1252,6 +1254,74 @@ button:disabled {
 
 .reply-btn:hover:not(:disabled) {
   background: linear-gradient(180deg, #3a7ce5 0%, #134799 100%);
+}
+
+.reply-btn.first-action-pulse:not(:disabled),
+.reply-send-btn.first-action-pulse:not(:disabled) {
+  animation: reply-action-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes delete-action-pulse {
+  0%,
+  100% {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #dc2626;
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.18);
+    transform: scale(1);
+  }
+
+  50% {
+    background: #fb923c;
+    border-color: #f97316;
+    color: white;
+    box-shadow:
+      0 0 0 4px rgba(249, 115, 22, 0.14),
+      0 8px 20px rgba(220, 38, 38, 0.22);
+    transform: scale(1.04);
+  }
+}
+
+@keyframes reply-action-pulse {
+  0%,
+  100% {
+    background: linear-gradient(180deg, #4f8df7 0%, #1a73e8 100%);
+    box-shadow:
+      inset 1px 1px 0 rgba(255, 255, 255, 0.85),
+      2px 2px 0 rgba(0, 0, 0, 0.18);
+    transform: scale(1);
+  }
+
+  50% {
+    background: linear-gradient(180deg, #fde68a 0%, #fbbf24 100%);
+    box-shadow:
+      0 0 0 4px rgba(250, 204, 21, 0.14),
+      0 8px 18px rgba(245, 158, 11, 0.22),
+      inset 1px 1px 0 rgba(255, 255, 255, 0.75);
+    transform: scale(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delete-icon-btn.first-action-pulse {
+    animation: none;
+    background: #fb923c;
+    border-color: #f97316;
+    color: white;
+    box-shadow:
+      0 0 0 4px rgba(249, 115, 22, 0.14),
+      0 8px 20px rgba(220, 38, 38, 0.22);
+  }
+
+  .reply-btn.first-action-pulse:not(:disabled),
+  .reply-send-btn.first-action-pulse:not(:disabled) {
+    animation: none;
+    background: linear-gradient(180deg, #fde68a 0%, #fbbf24 100%);
+    box-shadow:
+      0 0 0 4px rgba(250, 204, 21, 0.14),
+      0 8px 18px rgba(245, 158, 11, 0.22),
+      inset 1px 1px 0 rgba(255, 255, 255, 0.75);
+  }
 }
 
 .report-btn {

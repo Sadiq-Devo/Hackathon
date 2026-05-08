@@ -132,6 +132,8 @@ function App () {
   )
   const [musicOn, setMusicOn] = useState(false)
   const musicRef = useRef<HTMLAudioElement | null>(null)
+  const [hasShownFirstActionPulse, setHasShownFirstActionPulse] = useState(false)
+  const [showFirstActionPulse, setShowFirstActionPulse] = useState(false)
 
   const selectedEmail = emails.find((email) => email.id === selectedId) ?? null
   const completedCount = emails.filter((email) => email.done).length
@@ -331,11 +333,19 @@ function App () {
     setActivePopups((current) => current.filter((popup) => popup.id !== id))
   }
 
+  const stopFirstActionPulse = () => {
+    setShowFirstActionPulse(false)
+  }
+
   const openEmail = (email: Email) => {
     playSound(mouseClickSound, 0.34)
     setSelectedId(email.id)
     setIsReplying(false)
     setReplyDraft('')
+    if (!hasShownFirstActionPulse) {
+      setHasShownFirstActionPulse(true)
+      setShowFirstActionPulse(true)
+    }
     if (!email.read) {
       setEmails((current) => current.map((item) => (
         item.id === email.id ? { ...item, read: true } : item
@@ -356,6 +366,7 @@ function App () {
 
   const handleDecision = (choice: EmailType) => {
     if (!selectedEmail || selectedEmail.done) return
+    if (showFirstActionPulse) stopFirstActionPulse()
 
     const isCorrect = choice === selectedEmail.type
     const difficultyBonus = selectedEmail.difficulty === 'hard' ? 40 : selectedEmail.difficulty === 'medium' ? 25 : 10
@@ -682,7 +693,7 @@ function App () {
                           )}
                           {selectedEmail && !selectedEmail.done && (
                             <button
-                              className="delete-icon-btn"
+                              className={`delete-icon-btn ${showFirstActionPulse ? 'first-action-pulse delete-action-pulse' : ''}`}
                               onClick={() => {
                                 const idToTrash = selectedEmail.id
                                 handleDecision('phishing')
@@ -755,7 +766,7 @@ function App () {
                         />
                         <div className="reply-actions">
                           <button
-                            className="reply-send-btn"
+                            className={`reply-send-btn ${showFirstActionPulse ? 'first-action-pulse reply-action-pulse' : ''}`}
                             onClick={sendReply}
                             disabled={replyDraft.trim().length === 0}
                           >
@@ -769,7 +780,7 @@ function App () {
                     ) : (
                       <div className="action-toolbar">
                         <button
-                          className="action-btn reply-btn"
+                          className={`action-btn reply-btn ${showFirstActionPulse && selectedEmail && !selectedEmail.done ? 'first-action-pulse reply-action-pulse' : ''}`}
                           disabled={!selectedEmail || selectedEmail.done}
                           onClick={startReply}
                         >
