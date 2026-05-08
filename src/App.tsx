@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { emailTemplates, type Email, type EmailType } from './data/emailTemplates'
+import { employees, type Employee } from './data/employees'
+import { generateAiEmail, pickFallbackEmail } from './services/aiEmailGenerator'
 import './App.css'
 import backgroundMusic from './assets/audio/BackgroundMusic.mp3'
 import correctSound from './assets/audio/Correct.mp3'
@@ -34,19 +36,6 @@ import streak5 from './assets/effects/Streak5.png'
 type Screen = 'intro' | 'start' | 'game' | 'hacked' | 'end'
 type Folder = 'inbox' | 'trash' | 'org'
 
-type Employee = {
-  id: string
-  name: string
-  title: string
-  level: 1 | 2 | 3
-  initials: string
-  color: string
-  bio: string[]
-  recentActivity: string
-  isYou?: boolean
-  image?: string
-}
-
 type ActivePopup = {
   id: number
   image: string
@@ -73,10 +62,46 @@ const streakImages = [streak1, streak2, streak3, streak4, streak5]
 
 const popupDelays = [3000, 5000, 7000]
 const maxHearts = 3
-const EMAILS_PER_ROUND = 10
+const SCORE_BAR_TARGET = 1000
+const INITIAL_INBOX_SIZE = 3
+const NEW_EMAIL_MIN_DELAY = 4000
+const NEW_EMAIL_MAX_DELAY = 8000
 const gameplayMusicVolume = 0.2
 const gameOverMusicVolume = 0.34
 let popupId = 0
+
+const replyTemplates = [
+  'Thanks, I will take care of it.',
+  'Got it, I will handle this now.',
+  'Confirmed. I will follow up shortly.',
+  'Thanks for the update. I am on it.',
+  'Understood, I will check this today.',
+  'Sounds good. I will get back to you soon.',
+  'Confirmed, thanks for letting me know.',
+  'I have seen this and will handle it.',
+  'Thanks, I will review and respond.',
+  'Yes, I can help with that.',
+  'Appreciate the heads up. I will look into it.',
+  'No problem, I will sort this out.',
+  'Thanks. I will confirm once it is done.',
+  'Received, I will take the next step.',
+  'All good, I will follow the usual process.',
+  'Thanks, I will check the details.',
+  'Sure, I will take a look.',
+  'Confirmed. I will update you after checking.',
+  'Thanks, I will make sure this gets done.',
+  'I can do that. Thanks for sending it over.',
+  'Got it. I will verify and reply back.',
+  'Thanks, I will handle it carefully.',
+  'Understood. I will proceed with this.',
+  'Yes, that works for me.',
+  'Thanks for the reminder. I will do it.',
+  'I will check and let you know.',
+  'Confirmed. I will keep you posted.',
+  'Thanks, I will take a look when I can.',
+  'Received. I will deal with this shortly.',
+  'Sounds good, thanks for the message.',
+]
 
 const slides = [
   {
@@ -97,121 +122,6 @@ const slides = [
   },
 ]
 
-const employees: Employee[] = [
-  {
-    id: 'richard',
-    name: 'Richard Calloway',
-    title: 'CEO',
-    level: 1,
-    initials: 'RC',
-    color: '#1a73e8',
-    bio: [
-      '11 years as CEO, loves buzzwords',
-      'Prints out his emails',
-      'Constantly traveling, emails from airports',
-      'Favorite word: "synergy"',
-    ],
-    recentActivity: 'In Singapore, back Friday',
-    image: '/employees/Richard.png',
-  },
-  {
-    id: 'marcus',
-    name: 'Marcus Osei',
-    title: 'CTO',
-    level: 2,
-    initials: 'MO',
-    color: '#0f9d58',
-    bio: [
-      'Built 3 startups, one succeeded',
-      'Hates long meetings',
-      'Sends short, technical emails',
-      'Motto: "Could\'ve been an email"',
-    ],
-    recentActivity: 'Rolling out new VPN system',
-    image: '/employees/Marcus%20Osei.png',
-  },
-  {
-    id: 'diana',
-    name: 'Diana Chen',
-    title: 'CFO',
-    level: 2,
-    initials: 'DC',
-    color: '#e37400',
-    bio: [
-      'Says no to every budget request',
-      'Said no to the coffee machine for 4 years',
-      'Always 90 seconds late to meetings',
-      'Only fears: a bad quarter',
-    ],
-    recentActivity: 'Q4 budget review in progress',
-    image: '/employees/Diana%20Chen.png',
-  },
-  {
-    id: 'sandra',
-    name: 'Sandra Kowalski',
-    title: 'HR Manager',
-    level: 2,
-    initials: 'SK',
-    color: '#9334e9',
-    bio: [
-      'Holds the whole office together',
-      'Door always open, coffee always on',
-      'Has seen things. Says nothing.',
-    ],
-    recentActivity: 'Onboarding 3 new hires this month',
-    image: '/employees/Sandra%20Kowalsk.png',
-  },
-  {
-    id: 'priya',
-    name: 'Priya Nair',
-    title: 'Head of IT Security',
-    level: 3,
-    initials: 'PN',
-    color: '#d93025',
-    bio: [
-      'Reason your passwords need 14 characters',
-      'Warns you daily. You don\'t listen.',
-      'Coffee mug: "I told you so"',
-      'Plays CTF competitions',
-    ],
-    recentActivity: 'Running phishing awareness training',
-    image: '/employees/Priya%20Nair.png',
-  },
-  {
-    id: 'helena',
-    name: 'Helena Voss',
-    title: 'Legal',
-    level: 3,
-    initials: 'HV',
-    color: '#00796b',
-    bio: [
-      'Reads every line of every contract',
-      'Never says "yes", always "it depends"',
-      'Email signature longer than the contracts',
-      'Rick is a little scared of her',
-    ],
-    recentActivity: 'Reviewing vendor contracts',
-    image: '/employees/Helena%20Voss.png',
-  },
-  {
-    id: 'you',
-    name: 'You',
-    title: 'HR Specialist',
-    level: 3,
-    initials: 'ME',
-    color: '#1a73e8',
-    isYou: true,
-    bio: [
-      'Works closely with Sandra',
-      'Responsible for IT security training (ironic)',
-      'Replies to emails same day',
-      'Favorite meeting: the one that gets cancelled',
-    ],
-    recentActivity: 'Completing phishing awareness training',
-    image: '/employees/ME.png',
-  },
-]
-
 function App () {
   const gameMusicRef = useRef<HTMLAudioElement | null>(null)
   const [screen, setScreen] = useState<Screen>('intro')
@@ -223,7 +133,7 @@ function App () {
   const [mistakes, setMistakes] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
-  const [timer, setTimer] = useState(90)
+  const [timer, setTimer] = useState(150)
   const [feedback, setFeedback] = useState('Feedback visas här.')
   const [activePopups, setActivePopups] = useState<ActivePopup[]>([])
   const [comboBurst, setComboBurst] = useState(0)
@@ -243,6 +153,7 @@ function App () {
   const completedCount = emails.filter((email) => email.done).length
   const currentSlide = slides[slideIndex]
   const heartsRemaining = Math.max(0, maxHearts - mistakes)
+  const scoreProgress = Math.min(100, Math.round((score / SCORE_BAR_TARGET) * 100))
 
   const rank = useMemo(() => {
     if (score >= 850) return 'Phish Fighter'
@@ -276,7 +187,9 @@ function App () {
           return 0
         }
 
-        return current - 1
+        const next = current - 1
+        if (next <= 30) playTick()
+        return next
       })
     }, 1000)
 
@@ -296,6 +209,46 @@ function App () {
 
     fadeAudio(music, isLosingTransition ? 0.05 : gameplayMusicVolume, 500)
   }, [isLosingTransition])
+
+  useEffect(() => {
+    if (screen !== 'game') return
+
+    const controller = new AbortController()
+    let cancelled = false
+    let timeoutId: number | null = null
+
+    const scheduleNext = () => {
+      if (cancelled) return
+      const delay = randomBetween(NEW_EMAIL_MIN_DELAY, NEW_EMAIL_MAX_DELAY)
+      timeoutId = window.setTimeout(async () => {
+        if (cancelled) return
+
+        const aiEmail = await generateAiEmail(controller.signal)
+
+        if (cancelled) return
+
+        if (aiEmail) {
+          setEmails((current) => [aiEmail, ...current])
+        } else {
+          setEmails((current) => {
+            const usedIds = new Set(current.map((e) => e.id))
+            const fallback = pickFallbackEmail(usedIds)
+            return fallback ? [fallback, ...current] : current
+          })
+        }
+
+        scheduleNext()
+      }, delay)
+    }
+
+    scheduleNext()
+
+    return () => {
+      cancelled = true
+      controller.abort()
+      if (timeoutId !== null) window.clearTimeout(timeoutId)
+    }
+  }, [screen])
 
   useEffect(() => {
     if (screen !== 'game' || mistakes < 1 || activePopups.length >= popupImages.length) return
@@ -360,7 +313,7 @@ function App () {
     setMistakes(0)
     setCorrectCount(0)
     setWrongCount(0)
-    setTimer(90)
+    setTimer(150)
     setActivePopups([])
     setComboBurst(0)
     setComboImage(randomItem(streakImages))
@@ -373,18 +326,6 @@ function App () {
     setScoreSaved(false)
     setFeedback('Feedback visas här.')
     setScreen('start')
-  }
-
-  const generateEmails = () => {
-    setEmails(createInbox())
-    setSelectedId(null)
-    setActivePopups([])
-    setComboBurst(0)
-    setComboImage(randomItem(streakImages))
-    setMistakes(0)
-    setIsReplying(false)
-    setReplyDraft('')
-    setFeedback('Ny inbox genererad. Börja analysera.')
   }
 
   const closePopup = (id: number) => {
@@ -406,7 +347,7 @@ function App () {
   const startReply = () => {
     if (!selectedEmail || selectedEmail.done) return
     setIsReplying(true)
-    setReplyDraft('')
+    setReplyDraft(createReplyDraft(selectedEmail))
   }
 
   const cancelReply = () => {
@@ -418,7 +359,6 @@ function App () {
     if (!selectedEmail || selectedEmail.done) return
 
     const isCorrect = choice === selectedEmail.type
-    const isFinalEmail = emails.filter((email) => !email.done).length === 1
     const difficultyBonus = selectedEmail.difficulty === 'hard' ? 40 : selectedEmail.difficulty === 'medium' ? 25 : 10
 
     playSound(isCorrect ? correctSound : incorrectSound, isCorrect ? 0.62 : 0.56)
@@ -440,7 +380,6 @@ function App () {
       }
       setCorrectCount((current) => current + 1)
       setFeedback(`Rätt! ${selectedEmail.hint}`)
-      if (isFinalEmail) window.setTimeout(() => setScreen('end'), 900)
       return
     }
 
@@ -450,7 +389,8 @@ function App () {
     setComboBurst(0)
     setMistakes(nextMistakes)
     setWrongCount((current) => current + 1)
-    setFeedback(`Fel. Det här mejlet var ${labelForType(selectedEmail.type)}. ${selectedEmail.hint}`)
+    const flavor = selectedEmail.wrongFeedback ? ` ${selectedEmail.wrongFeedback}` : ''
+    setFeedback(`Fel. Det här mejlet var ${labelForType(selectedEmail.type)}.${flavor} ${selectedEmail.hint}`)
 
     if (nextMistakes >= 3) {
       playSound(glitchSound, 0.72)
@@ -462,8 +402,6 @@ function App () {
     } else if (nextMistakes === 1) {
       playSound(popSound, 0.42)
       setActivePopups([createPopup()])
-    } else if (isFinalEmail) {
-      window.setTimeout(() => setScreen('end'), 900)
     }
   }
 
@@ -572,7 +510,16 @@ function App () {
             <header className="gmail-topbar">
               <div className="gmail-brand">
                 <button className="icon-btn" aria-label="Menu">☰</button>
-                <div className="gmail-logo-mark">M</div>
+                <div className="gmail-logo-mark" aria-label="Phish Fighter Mail fish logo">
+                  <svg className="logo-fish-icon" viewBox="0 0 64 48" aria-hidden="true" focusable="false">
+                    <path className="logo-tail" d="M8 15l15 9L8 33l5-9z" />
+                    <path className="logo-body" d="M21 12h21l12 12-12 12H21l-9-12z" />
+                    <path className="logo-gill" d="M35 15l-4 18" />
+                    <rect className="logo-eye" x="40" y="18" width="5" height="5" />
+                    <path className="logo-fin" d="M26 13l8-7 5 7z" />
+                    <path className="logo-bottom-fin" d="M27 35l7 6 5-6z" />
+                  </svg>
+                </div>
                 <h2>Phish Fighter Mail</h2>
               </div>
 
@@ -582,8 +529,17 @@ function App () {
               </div>
 
               <div className="stats">
-                <span>Score <strong>{score}</strong></span>
-                <span>Streak <strong>{streak}</strong></span>
+                <span className="score-stat" aria-label={`Score ${score}`}>
+                  <span className="score-stat-top">
+                    <span>Score</span>
+                    <strong>{score}</strong>
+                  </span>
+                  <span className="score-spacebar" aria-hidden="true">
+                    <span className="score-spacebar-fill" style={{ width: `${scoreProgress}%` }} />
+                    <span className="score-spacebar-shine" />
+                  </span>
+                </span>
+                <span className="streak-stat">Streak <strong>{streak}</strong></span>
                 <span className="heart-stat" aria-label={`${heartsRemaining} hearts left`}>
                   Hearts
                   <strong className="heart-row">
@@ -597,14 +553,15 @@ function App () {
                     ))}
                   </strong>
                 </span>
-                <span>Time <strong id="timer">{timer}</strong>s</span>
+                <span className={`timer-stat ${timer <= 30 ? 'timer-warning' : ''}`}>
+                  <span className="timer-display-bg">88:88</span>
+                  <strong id="timer">{formatClock(timer)}</strong>
+                </span>
               </div>
             </header>
 
             <main className="gmail-shell">
               <aside className="gmail-sidebar">
-                <button id="generate-btn" onClick={generateEmails}>New Inbox</button>
-
                 <nav className="gmail-nav" aria-label="Mail folders">
                   <button
                     className={activeFolder === 'inbox' ? 'active-folder' : ''}
@@ -631,11 +588,12 @@ function App () {
 
                 <div className="progress-section">
                   <div className="progress-info">
-                    <span>Progress</span>
-                    <span>{completedCount} / {emails.length} emails</span>
+                    <span>Cleared</span>
+                    <span>{completedCount}</span>
                   </div>
-                  <div className="progress-bar">
-                    <div id="progress-fill" style={{ width: `${(completedCount / emails.length) * 100}%` }} />
+                  <div className="progress-info">
+                    <span>In inbox</span>
+                    <span>{emails.length - completedCount}</span>
                   </div>
                 </div>
               </aside>
@@ -678,9 +636,43 @@ function App () {
                   </div>
                 </div>
               ) : activeFolder === 'trash' ? (
-                <div className="org-chart-view org-empty-state">
-                  <p>Trash is empty</p>
-                </div>
+                <section className="email-app trash-view">
+                  <aside className="inbox-list">
+                    <div className="inbox-title-row">
+                      <h3>Trash</h3>
+                      <span>{emails.filter((e) => e.trashed).length} items</span>
+                    </div>
+                    <div>
+                      {emails.filter((email) => email.trashed).length === 0 ? (
+                        <div className="trash-empty">Trash is empty</div>
+                      ) : emails.filter((email) => email.trashed).map((email) => (
+                        <button
+                          className="email-item done"
+                          key={email.id}
+                          type="button"
+                          disabled
+                        >
+                          <span className="unread-dot" aria-hidden="true" />
+                          <div className="email-item-content">
+                            <h4>{email.from}</h4>
+                            <p>{email.subject}</p>
+                            <div className="email-meta">
+                              <span>Deleted</span>
+                              <span className={`small-badge ${email.difficulty}`}>{capitalize(email.difficulty)}</span>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </aside>
+                  <section className="email-preview">
+                    <div className="email-body">
+                      <p style={{ color: '#5f6368', fontFamily: 'Courier New, monospace', textAlign: 'center', marginTop: '40px' }}>
+                        Deleted emails. They cannot be restored.
+                      </p>
+                    </div>
+                  </section>
+                </section>
               ) : (
                 <section className="email-app">
                   <aside className="inbox-list">
@@ -689,7 +681,7 @@ function App () {
                       <span>Primary</span>
                     </div>
                     <div>
-                      {emails.map((email) => {
+                      {emails.filter((email) => !email.trashed).map((email) => {
                         const itemClasses = [
                           'email-item',
                           selectedId === email.id ? 'active' : '',
@@ -723,11 +715,30 @@ function App () {
                     <div className="email-header">
                       <div className="email-header-top">
                         <p><strong>From:</strong> <span>{selectedEmail?.from ?? 'Välj ett mejl'}</span></p>
-                        {selectedEmail && (
-                          <span className={`difficulty-badge ${selectedEmail.difficulty}`}>
-                            {capitalize(selectedEmail.difficulty)}
-                          </span>
-                        )}
+                        <div className="email-header-actions">
+                          {selectedEmail && (
+                            <span className={`difficulty-badge ${selectedEmail.difficulty}`}>
+                              {capitalize(selectedEmail.difficulty)}
+                            </span>
+                          )}
+                          {selectedEmail && !selectedEmail.done && (
+                            <button
+                              className="delete-icon-btn"
+                              onClick={() => {
+                                const idToTrash = selectedEmail.id
+                                handleDecision('phishing')
+                                setEmails((current) => current.map((email) => (
+                                  email.id === idToTrash ? { ...email, trashed: true } : email
+                                )))
+                                setSelectedId(null)
+                              }}
+                              aria-label="Delete email"
+                              title="Delete"
+                            >
+                              🗑
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <p><strong>Subject:</strong> <span>{selectedEmail?.subject ?? 'Inget mejl valt'}</span></p>
                     </div>
@@ -783,21 +794,6 @@ function App () {
                           onClick={startReply}
                         >
                           ↩ Reply
-                        </button>
-                        <button
-                          className="action-btn report-btn"
-                          disabled={!selectedEmail || selectedEmail.done}
-                          onClick={() => handleDecision('phishing')}
-                        >
-                          ⚑ Report phishing
-                        </button>
-                        <button
-                          className="action-btn delete-btn"
-                          disabled={!selectedEmail || selectedEmail.done}
-                          onClick={() => handleDecision('phishing')}
-                          aria-label="Delete email"
-                        >
-                          🗑 Delete
                         </button>
                       </div>
                     )}
@@ -900,6 +896,7 @@ function App () {
             </div>
             <h3 className="org-modal-name">{selectedEmployee.name}</h3>
             <p className="org-modal-role">{selectedEmployee.title}</p>
+            <p className="org-modal-email">{selectedEmployee.email}</p>
             <ul className="org-modal-bio">
               {selectedEmployee.bio.map((item, i) => (
                 <li key={i}>{item}</li>
@@ -1019,6 +1016,10 @@ function OrgCard ({ employee, onClick }: { employee: Employee; onClick: () => vo
       </div>
       <span className="org-name">{employee.name}</span>
       <span className="org-title">{employee.title}</span>
+      <span className="org-email">{employee.email}</span>
+      <span className="org-status" title={employee.recentActivity}>
+        <span className="org-status-dot" /> {employee.recentActivity}
+      </span>
     </button>
   )
 }
@@ -1079,6 +1080,31 @@ function fadeAudio (audio: HTMLAudioElement, targetVolume: number, duration: num
   window.requestAnimationFrame(step)
 }
 
+let tickCtx: AudioContext | null = null
+function playTick () {
+  try {
+    if (!tickCtx) tickCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+    const ctx = tickCtx
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.frequency.value = 1100
+    osc.type = 'square'
+    gain.gain.setValueAtTime(0.04, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.04)
+  } catch {
+    // Web Audio not available; ignore
+  }
+}
+
+function formatClock (seconds: number) {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+}
+
 function createPopup (): ActivePopup {
   const id = popupId++
   const popup = randomItem(popupImages)
@@ -1101,10 +1127,15 @@ function randomBetween (min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+function createReplyDraft (email: Email) {
+  const intro = randomItem(replyTemplates)
+  return `${intro}\n\nBest,\nNexus Security Team\n\nRe: ${email.subject}`
+}
+
 function createInbox () {
   return [...emailTemplates]
     .sort(() => Math.random() - 0.5)
-    .slice(0, EMAILS_PER_ROUND)
+    .slice(0, INITIAL_INBOX_SIZE)
     .map((email) => ({ ...email, done: false, read: false }))
 }
 
