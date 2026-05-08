@@ -705,7 +705,28 @@ function App () {
                               aria-label="Delete email"
                               title="Delete"
                             >
-                              🗑
+                              <svg
+                                className="trash-icon"
+                                viewBox="0 0 24 24"
+                                shapeRendering="crispEdges"
+                                aria-hidden="true"
+                              >
+                                <rect x="10" y="2" width="4" height="1" fill="#450a0a" />
+                                <rect x="9" y="3" width="6" height="2" fill="#7f1d1d" />
+                                <rect x="10" y="3" width="4" height="1" fill="#fca5a5" />
+                                <rect x="3" y="5" width="18" height="3" fill="#dc2626" />
+                                <rect x="3" y="5" width="18" height="1" fill="#fecaca" />
+                                <rect x="3" y="7" width="18" height="1" fill="#7f1d1d" />
+                                <rect x="5" y="8" width="14" height="12" fill="#dc2626" />
+                                <rect x="5" y="8" width="1" height="12" fill="#fecaca" />
+                                <rect x="18" y="8" width="1" height="12" fill="#7f1d1d" />
+                                <rect x="8" y="9" width="1" height="10" fill="#7f1d1d" />
+                                <rect x="12" y="9" width="1" height="10" fill="#7f1d1d" />
+                                <rect x="16" y="9" width="1" height="10" fill="#7f1d1d" />
+                                <rect x="5" y="19" width="14" height="1" fill="#450a0a" />
+                                <rect x="3" y="5" width="1" height="3" fill="#450a0a" />
+                                <rect x="20" y="5" width="1" height="3" fill="#450a0a" />
+                              </svg>
                             </button>
                           )}
                         </div>
@@ -880,7 +901,16 @@ function App () {
       )}
 
       {screen === 'end' && (
-        <section id="end-screen" className="screen active">
+        <section id="end-screen" className="screen active laptop-pov">
+          <div className="laptop-bezel" aria-hidden="true">
+            <div className="laptop-bezel-top" />
+            <div className="laptop-bezel-left" />
+            <div className="laptop-bezel-right" />
+            <div className="laptop-bezel-bottom">
+              <div className="laptop-bezel-hinge" />
+            </div>
+            <div className="laptop-bezel-cam" />
+          </div>
           <div className="end-card">
             <div className="end-header">
               <h1>Game Over</h1>

@@ -1035,6 +1035,18 @@ button:disabled {
 
 .delete-icon-btn.first-action-pulse {
   animation: delete-action-pulse 1.8s ease-in-out infinite;
+.trash-icon {
+  width: 26px;
+  height: 26px;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.25));
+}
+
+.delete-icon-btn:hover .trash-icon {
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.4)) brightness(1.1);
 }
 
 .sender-panel {
@@ -4612,4 +4624,315 @@ button:disabled {
   justify-content: center;
   padding-left: 10px;
   padding-right: 10px;
+}
+
+/* ============================================================
+   GAME OVER — Win98 dialog over Bliss desktop
+   Scoped strictly to #end-screen so the game UI is untouched.
+   ============================================================ */
+
+#end-screen.laptop-pov {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(ellipse 60% 30% at 20% 18%, rgba(255, 255, 255, 0.85), transparent 70%),
+    radial-gradient(ellipse 45% 22% at 78% 12%, rgba(255, 255, 255, 0.7), transparent 70%),
+    radial-gradient(ellipse 130% 60% at 50% 110%, #4a8a30 0%, #6ab450 35%, transparent 60%),
+    linear-gradient(to bottom, #2a6db3 0%, #4a90e2 35%, #87ceeb 65%, #b6e0f0 88%, #6ab450 92%) !important;
+}
+
+#end-screen.laptop-pov::before {
+  display: none !important;
+}
+
+#end-screen .end-card {
+  background: #c0c0c0 !important;
+  border: 2px solid !important;
+  border-color: #ffffff #404040 #404040 #ffffff !important;
+  box-shadow:
+    inset 1px 1px 0 #dfdfdf,
+    inset -1px -1px 0 #808080,
+    4px 4px 0 rgba(0, 0, 0, 0.35) !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  max-width: 560px !important;
+  width: calc(100% - 80px) !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+  color: #000000 !important;
+  animation: win98WindowOpen 0.3s ease !important;
+  z-index: 10 !important;
+}
+
+#end-screen .end-header {
+  background: linear-gradient(to right, #000080 0%, #1084d0 100%) !important;
+  color: #ffffff !important;
+  padding: 4px 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin: 0 !important;
+  border-bottom: 1px solid #000040 !important;
+}
+
+#end-screen .end-header h1 {
+  color: #ffffff !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  letter-spacing: 0 !important;
+  text-shadow: none !important;
+}
+
+#end-screen .end-header h1::before {
+  content: '💀';
+  font-size: 14px;
+}
+
+#end-screen .end-rank-badge {
+  background: rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 0 !important;
+  padding: 2px 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+  box-shadow: none !important;
+}
+
+#end-screen .end-rank-label {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  font-weight: normal !important;
+}
+
+#end-screen .end-rank-value {
+  color: #fde68a !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
+}
+
+/* Stats grid — Win98 sunken-inset boxes */
+#end-screen .final-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 6px !important;
+  padding: 14px 14px 6px !important;
+  margin: 0 !important;
+}
+
+#end-screen .final-grid > div {
+  background: #ffffff !important;
+  border: 2px solid !important;
+  border-color: #404040 #ffffff #ffffff #404040 !important;
+  box-shadow: inset 1px 1px 0 #808080 !important;
+  border-radius: 0 !important;
+  padding: 10px 14px !important;
+  text-align: left !important;
+}
+
+#end-screen .final-grid p {
+  font-size: 10px !important;
+  color: #000000 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1.5px !important;
+  margin: 0 0 4px 0 !important;
+  font-weight: bold !important;
+}
+
+#end-screen .final-grid h2 {
+  font-family: 'Courier New', monospace !important;
+  font-size: 22px !important;
+  font-weight: bold !important;
+  color: #000080 !important;
+  margin: 0 !important;
+}
+
+#end-screen .final-message {
+  padding: 8px 14px 4px !important;
+  margin: 0 !important;
+  font-size: 12px !important;
+  color: #000000 !important;
+  font-style: italic !important;
+  text-align: center !important;
+}
+
+/* Save score */
+#end-screen .end-save-section {
+  padding: 6px 14px !important;
+  background: transparent !important;
+  border: none !important;
+  margin: 0 !important;
+}
+
+#end-screen .end-save-label {
+  font-size: 11px !important;
+  color: #000000 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  margin-bottom: 6px !important;
+  font-weight: bold !important;
+}
+
+#end-screen .end-save-row {
+  display: flex !important;
+  gap: 6px !important;
+}
+
+#end-screen .end-name-input {
+  flex: 1 !important;
+  background: #ffffff !important;
+  border: 2px solid !important;
+  border-color: #404040 #ffffff #ffffff #404040 !important;
+  box-shadow: inset 1px 1px 0 #808080 !important;
+  border-radius: 0 !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+  font-size: 13px !important;
+  color: #000000 !important;
+  padding: 4px 8px !important;
+  height: 28px !important;
+  outline: none !important;
+}
+
+#end-screen .end-save-btn {
+  background: #c0c0c0 !important;
+  color: #000000 !important;
+  border: 2px solid !important;
+  border-color: #ffffff #404040 #404040 #ffffff !important;
+  box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 #808080 !important;
+  border-radius: 0 !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
+  padding: 4px 18px !important;
+  height: 28px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+#end-screen .end-save-btn:hover:not(:disabled) {
+  background: #d4d0c8 !important;
+  transform: none !important;
+}
+
+#end-screen .end-save-btn:active:not(:disabled) {
+  border-color: #404040 #ffffff #ffffff #404040 !important;
+  box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #dfdfdf !important;
+}
+
+#end-screen .end-saved-confirm {
+  margin: 4px 14px !important;
+  background: #c4ffe0 !important;
+  border: 1px solid #064e3b !important;
+  color: #064e3b !important;
+  font-size: 12px !important;
+  text-align: center !important;
+  font-weight: bold !important;
+  border-radius: 0 !important;
+  padding: 6px !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+}
+
+/* Leaderboard */
+#end-screen .end-leaderboard {
+  background: transparent !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 8px 14px !important;
+}
+
+#end-screen .end-leaderboard h3 {
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+  color: #000000 !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  margin-bottom: 6px !important;
+}
+
+#end-screen .leaderboard-list {
+  background: #ffffff !important;
+  border: 2px solid !important;
+  border-color: #404040 #ffffff #ffffff #404040 !important;
+  box-shadow: inset 1px 1px 0 #808080 !important;
+  border-radius: 0 !important;
+  max-height: 180px !important;
+  overflow-y: auto !important;
+  padding: 4px !important;
+}
+
+#end-screen .leaderboard-row {
+  display: grid !important;
+  grid-template-columns: 50px 1fr 70px !important;
+  align-items: center !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  font-family: 'Courier New', monospace !important;
+  color: #000000 !important;
+  border-bottom: 1px dotted #c0c0c0 !important;
+  background: transparent !important;
+}
+
+#end-screen .leaderboard-row.top-1 { background: linear-gradient(to right, #fef3c7, transparent) !important; font-weight: bold !important; }
+#end-screen .leaderboard-row.top-2 { background: linear-gradient(to right, #f1f5f9, transparent) !important; }
+#end-screen .leaderboard-row.top-3 { background: linear-gradient(to right, #fef0e6, transparent) !important; }
+
+#end-screen .lb-rank {
+  font-size: 14px !important;
+  font-weight: bold !important;
+  color: #000000 !important;
+}
+
+#end-screen .lb-name {
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  color: #000000 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+#end-screen .lb-score {
+  text-align: right !important;
+  font-weight: bold !important;
+  color: #000080 !important;
+}
+
+/* Restart button */
+#end-screen #restart-btn {
+  display: block !important;
+  margin: 8px 14px 14px !important;
+  background: #c0c0c0 !important;
+  color: #000000 !important;
+  border: 2px solid !important;
+  border-color: #ffffff #404040 #404040 #ffffff !important;
+  box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 #808080 !important;
+  border-radius: 0 !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: bold !important;
+  padding: 8px 22px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  width: calc(100% - 28px) !important;
+}
+
+#end-screen #restart-btn:hover {
+  background: #d4d0c8 !important;
+  transform: none !important;
+}
+
+#end-screen #restart-btn:active {
+  border-color: #404040 #ffffff #ffffff #404040 !important;
+  box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #dfdfdf !important;
 }
