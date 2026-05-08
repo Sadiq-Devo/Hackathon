@@ -1033,6 +1033,20 @@ button:disabled {
   transform: scale(1.05);
 }
 
+.trash-icon {
+  width: 26px;
+  height: 26px;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.25));
+}
+
+.delete-icon-btn:hover .trash-icon {
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.4)) brightness(1.1);
+}
+
 .sender-panel {
   display: flex;
   align-items: center;
