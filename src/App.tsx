@@ -869,7 +869,16 @@ function App () {
       )}
 
       {screen === 'end' && (
-        <section id="end-screen" className="screen active">
+        <section id="end-screen" className="screen active laptop-pov">
+          <div className="laptop-bezel" aria-hidden="true">
+            <div className="laptop-bezel-top" />
+            <div className="laptop-bezel-left" />
+            <div className="laptop-bezel-right" />
+            <div className="laptop-bezel-bottom">
+              <div className="laptop-bezel-hinge" />
+            </div>
+            <div className="laptop-bezel-cam" />
+          </div>
           <div className="end-card">
             <div className="end-header">
               <h1>Game Over</h1>
