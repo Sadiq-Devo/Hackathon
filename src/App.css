@@ -5155,10 +5155,18 @@ button:disabled {
   color: #000080 !important;
 }
 
-/* Restart button */
-#end-screen #restart-btn {
-  display: block !important;
+/* End actions row — Play Again + Quit Game */
+#end-screen .end-actions {
+  display: flex !important;
+  gap: 8px !important;
   margin: 8px 14px 14px !important;
+}
+
+#end-screen #restart-btn,
+#end-screen #quit-btn {
+  flex: 1 !important;
+  display: block !important;
+  margin: 0 !important;
   background: #c0c0c0 !important;
   color: #000000 !important;
   border: 2px solid !important;
@@ -5171,15 +5179,391 @@ button:disabled {
   padding: 8px 22px !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
-  width: calc(100% - 28px) !important;
+  width: auto !important;
 }
 
-#end-screen #restart-btn:hover {
+#end-screen #restart-btn {
+  background: linear-gradient(to bottom, #d4d0c8, #c0c0c0) !important;
+}
+
+#end-screen #restart-btn:hover,
+#end-screen #quit-btn:hover {
   background: #d4d0c8 !important;
   transform: none !important;
 }
 
-#end-screen #restart-btn:active {
+#end-screen #restart-btn:active,
+#end-screen #quit-btn:active {
+  border-color: #404040 #ffffff #ffffff #404040 !important;
+  box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #dfdfdf !important;
+}
+
+/* ============================================================
+   OUTCOME SCREENS — shared Win98 dialog (hacked-menu, mistakes)
+   Mirrors #end-screen styling but applies via .outcome-screen
+   ============================================================ */
+
+.outcome-screen.laptop-pov {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(ellipse 60% 30% at 20% 18%, rgba(255, 255, 255, 0.85), transparent 70%),
+    radial-gradient(ellipse 45% 22% at 78% 12%, rgba(255, 255, 255, 0.7), transparent 70%),
+    radial-gradient(ellipse 130% 60% at 50% 110%, #4a8a30 0%, #6ab450 35%, transparent 60%),
+    linear-gradient(to bottom, #2a6db3 0%, #4a90e2 35%, #87ceeb 65%, #b6e0f0 88%, #6ab450 92%) !important;
+}
+
+.outcome-screen.laptop-pov::before {
+  display: none !important;
+}
+
+.outcome-screen .end-card {
+  background: #c0c0c0 !important;
+  border: 2px solid !important;
+  border-color: #ffffff #404040 #404040 #ffffff !important;
+  box-shadow:
+    inset 1px 1px 0 #dfdfdf,
+    inset -1px -1px 0 #808080,
+    4px 4px 0 rgba(0, 0, 0, 0.35) !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  max-width: 560px !important;
+  width: calc(100% - 80px) !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+  color: #000000 !important;
+  animation: win98WindowOpen 0.3s ease !important;
+  z-index: 10 !important;
+}
+
+.outcome-screen .end-card.mistakes-card {
+  max-width: 620px !important;
+}
+
+.outcome-screen .end-header {
+  background: linear-gradient(to right, #000080 0%, #1084d0 100%) !important;
+  color: #ffffff !important;
+  padding: 4px 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin: 0 !important;
+  border-bottom: 1px solid #000040 !important;
+}
+
+.outcome-screen .end-header h1 {
+  color: #ffffff !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  letter-spacing: 0 !important;
+  text-shadow: none !important;
+}
+
+#hacked-menu-screen .end-header h1::before {
+  content: '🛡';
+  font-size: 14px;
+}
+
+#mistakes-screen .end-header h1::before {
+  content: '📋';
+  font-size: 14px;
+}
+
+.outcome-screen .end-rank-badge {
+  background: rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 0 !important;
+  padding: 2px 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+  box-shadow: none !important;
+}
+
+.outcome-screen .end-rank-label {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  font-weight: normal !important;
+}
+
+.outcome-screen .end-rank-value {
+  color: #fde68a !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
+}
+
+#hacked-menu-screen .end-rank-value {
+  color: #fca5a5 !important;
+}
+
+/* ============================================================
+   HACKED MENU SCREEN body
+   ============================================================ */
+
+#hacked-menu-screen .hacked-menu-body {
+  padding: 14px !important;
+}
+
+#hacked-menu-screen .hacked-menu-message {
+  text-align: center !important;
+  font-size: 12px !important;
+  color: #000000 !important;
+  margin: 0 0 14px 0 !important;
+  line-height: 1.6 !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+}
+
+#hacked-menu-screen .hacked-menu-stats {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 6px !important;
+  margin-bottom: 14px !important;
+}
+
+#hacked-menu-screen .hacked-menu-stats > div {
+  background: #ffffff !important;
+  border: 2px solid !important;
+  border-color: #404040 #ffffff #ffffff #404040 !important;
+  box-shadow: inset 1px 1px 0 #808080 !important;
+  border-radius: 0 !important;
+  padding: 8px !important;
+  text-align: center !important;
+}
+
+#hacked-menu-screen .hacked-menu-stats p {
+  font-size: 9px !important;
+  color: #000000 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1.5px !important;
+  margin: 0 0 4px 0 !important;
+  font-weight: bold !important;
+}
+
+#hacked-menu-screen .hacked-menu-stats h2 {
+  font-family: 'Courier New', monospace !important;
+  font-size: 20px !important;
+  font-weight: bold !important;
+  color: #000080 !important;
+  margin: 0 !important;
+}
+
+#hacked-menu-screen .end-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+
+#hacked-menu-screen .end-actions button {
+  flex: none !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: #c0c0c0 !important;
+  color: #000000 !important;
+  border: 2px solid !important;
+  border-color: #ffffff #404040 #404040 #ffffff !important;
+  box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 #808080 !important;
+  border-radius: 0 !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: bold !important;
+  padding: 9px 22px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+#hacked-menu-screen #restart-btn {
+  background: linear-gradient(to bottom, #d4d0c8, #c0c0c0) !important;
+}
+
+#hacked-menu-screen .end-actions button:hover:not(:disabled) {
+  background: #d4d0c8 !important;
+  transform: none !important;
+}
+
+#hacked-menu-screen .end-actions button:active:not(:disabled) {
+  border-color: #404040 #ffffff #ffffff #404040 !important;
+  box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #dfdfdf !important;
+}
+
+#hacked-menu-screen .end-actions button:disabled {
+  color: #808080 !important;
+  text-shadow: 1px 1px 0 #ffffff !important;
+  cursor: not-allowed !important;
+}
+
+/* ============================================================
+   MISTAKES REVIEW SCREEN
+   ============================================================ */
+
+#mistakes-screen .mistakes-body {
+  padding: 12px !important;
+}
+
+#mistakes-screen .mistakes-intro {
+  font-size: 12px !important;
+  color: #000000 !important;
+  margin: 0 0 10px 0 !important;
+  font-style: italic !important;
+  text-align: center !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+}
+
+#mistakes-screen .mistakes-list {
+  background: #ffffff !important;
+  border: 2px solid !important;
+  border-color: #404040 #ffffff #ffffff #404040 !important;
+  box-shadow: inset 1px 1px 0 #808080 !important;
+  border-radius: 0 !important;
+  max-height: 360px !important;
+  overflow-y: auto !important;
+  padding: 8px !important;
+  margin-bottom: 12px !important;
+}
+
+#mistakes-screen .mistake-card {
+  background: #f5f3eb !important;
+  border: 1px solid #808080 !important;
+  padding: 8px 10px !important;
+  margin-bottom: 8px !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+  font-size: 12px !important;
+  color: #000000 !important;
+}
+
+#mistakes-screen .mistake-card:last-child {
+  margin-bottom: 0 !important;
+}
+
+#mistakes-screen .mistake-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 6px !important;
+  padding-bottom: 4px !important;
+  border-bottom: 1px dashed #808080 !important;
+}
+
+#mistakes-screen .mistake-num {
+  font-family: 'Courier New', monospace !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+  color: #000080 !important;
+}
+
+#mistakes-screen .mistake-tag {
+  font-size: 10px !important;
+  font-weight: bold !important;
+  letter-spacing: 1px !important;
+  padding: 2px 8px !important;
+  border: 1px solid #404040 !important;
+  text-transform: uppercase !important;
+}
+
+#mistakes-screen .mistake-tag.tag-phish {
+  background: #ffd4d4 !important;
+  color: #7f1d1d !important;
+}
+
+#mistakes-screen .mistake-tag.tag-legit {
+  background: #d4ffd4 !important;
+  color: #064e3b !important;
+}
+
+#mistakes-screen .mistake-meta {
+  font-size: 11px !important;
+  color: #000000 !important;
+  line-height: 1.5 !important;
+  margin-bottom: 6px !important;
+}
+
+#mistakes-screen .mistake-meta strong {
+  color: #404040 !important;
+  font-weight: bold !important;
+  display: inline-block !important;
+  min-width: 56px !important;
+}
+
+#mistakes-screen .mistake-verdict {
+  font-size: 11px !important;
+  color: #000000 !important;
+  margin-bottom: 6px !important;
+  padding: 4px 8px !important;
+  background: #fff7d6 !important;
+  border-left: 3px solid #f59e0b !important;
+}
+
+#mistakes-screen .mistake-verdict strong {
+  color: #7f1d1d !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  font-weight: bold !important;
+}
+
+#mistakes-screen .mistake-feedback {
+  font-size: 11px !important;
+  color: #7f1d1d !important;
+  margin-bottom: 4px !important;
+  padding: 4px 8px !important;
+  background: #ffe4e4 !important;
+  border-left: 3px solid #dc2626 !important;
+  line-height: 1.5 !important;
+}
+
+#mistakes-screen .mistake-hint {
+  font-size: 11px !important;
+  color: #064e3b !important;
+  padding: 4px 8px !important;
+  background: #e4ffe4 !important;
+  border-left: 3px solid #16a34a !important;
+  line-height: 1.5 !important;
+}
+
+#mistakes-screen .end-actions {
+  display: flex !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+
+#mistakes-screen .end-actions button {
+  flex: 1 !important;
+  background: #c0c0c0 !important;
+  color: #000000 !important;
+  border: 2px solid !important;
+  border-color: #ffffff #404040 #404040 #ffffff !important;
+  box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 #808080 !important;
+  border-radius: 0 !important;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: bold !important;
+  padding: 8px 22px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+#mistakes-screen #restart-btn {
+  background: linear-gradient(to bottom, #d4d0c8, #c0c0c0) !important;
+}
+
+#mistakes-screen .end-actions button:hover {
+  background: #d4d0c8 !important;
+  transform: none !important;
+}
+
+#mistakes-screen .end-actions button:active {
   border-color: #404040 #ffffff #ffffff #404040 !important;
   box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #dfdfdf !important;
 }

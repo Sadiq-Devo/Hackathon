@@ -41,7 +41,7 @@ import streak3 from './assets/effects/Streak3.png'
 import streak4 from './assets/effects/Streak4.png'
 import streak5 from './assets/effects/Streak5.png'
 
-type Screen = 'start' | 'game' | 'hacked' | 'end'
+type Screen = 'start' | 'game' | 'hacked' | 'hacked-menu' | 'mistakes' | 'end'
 type Folder = 'inbox' | 'trash' | 'org'
 
 type ActivePopup = {
@@ -146,7 +146,7 @@ function App () {
   const [mistakes, setMistakes] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
-  const [timer, setTimer] = useState(150)
+  const [timer, setTimer] = useState(30)
   const [feedback, setFeedback] = useState('Feedback visas här.')
   const [activePopups, setActivePopups] = useState<ActivePopup[]>([])
   const [comboBurst, setComboBurst] = useState(0)
@@ -167,6 +167,7 @@ function App () {
   const [musicOn, setMusicOn] = useState(true)
   const [hasShownFirstActionPulse, setHasShownFirstActionPulse] = useState(false)
   const [showFirstActionPulse, setShowFirstActionPulse] = useState(false)
+  const [mistakeEmails, setMistakeEmails] = useState<Email[]>([])
 
   const selectedEmail = emails.find((email) => email.id === selectedId) ?? null
   const completedCount = emails.filter((email) => email.done).length
@@ -401,7 +402,7 @@ function App () {
     setFeedback('Klicka på ett mejl och välj rätt åtgärd.')
   }
 
-  const resetGame = () => {
+  const resetGameState = () => {
     setEmails(createInbox())
     setSelectedId(null)
     setScore(0)
@@ -409,7 +410,7 @@ function App () {
     setMistakes(0)
     setCorrectCount(0)
     setWrongCount(0)
-    setTimer(150)
+    setTimer(30)
     setActivePopups([])
     setComboBurst(0)
     setComboImage(randomItem(streakImages))
@@ -423,8 +424,19 @@ function App () {
     setSelectedEmployee(null)
     setPlayerName('')
     setScoreSaved(false)
+    setMistakeEmails([])
+  }
+
+  const returnToLobby = () => {
+    resetGameState()
     setFeedback('Feedback visas här.')
     setScreen('start')
+  }
+
+  const playAgain = () => {
+    resetGameState()
+    setFeedback('Klicka på ett mejl och välj rätt åtgärd.')
+    setScreen('game')
   }
 
   const closePopup = (id: number) => {
@@ -524,6 +536,7 @@ function App () {
     setCorrectBurst(0)
     setMistakes(nextMistakes)
     setWrongCount((current) => current + 1)
+    setMistakeEmails((current) => [...current, selectedEmail])
     const flavor = selectedEmail.wrongFeedback ? ` ${selectedEmail.wrongFeedback}` : ''
     setFeedback(`Fel. Det här mejlet var ${labelForType(selectedEmail.type)}.${flavor} ${selectedEmail.hint}`)
 
@@ -1045,16 +1058,7 @@ function App () {
           <div className="hacked-content">
             <button
               id="continue-btn"
-              onClick={() => {
-                startGameplayMusic()
-                setMistakes(0)
-                setActivePopups([])
-                setComboBurst(0)
-                setComboImage(randomItem(streakImages))
-                setIsLosingTransition(false)
-                setFeedback('Systemet är rensat. Fortsätt försiktigt.')
-                setScreen('game')
-              }}
+              onClick={() => setScreen('hacked-menu')}
               onMouseEnter={() => playSound(hoverSound, 0.36)}
             >
               <span>Clean System</span>
@@ -1090,8 +1094,153 @@ function App () {
         </div>
       )}
 
+      {screen === 'hacked-menu' && (
+        <section id="hacked-menu-screen" className="screen active laptop-pov outcome-screen">
+          <div className="laptop-bezel" aria-hidden="true">
+            <div className="laptop-bezel-top" />
+            <div className="laptop-bezel-left" />
+            <div className="laptop-bezel-right" />
+            <div className="laptop-bezel-bottom">
+              <div className="laptop-bezel-hinge" />
+            </div>
+            <div className="laptop-bezel-cam" />
+          </div>
+          <div className="end-card">
+            <div className="end-header">
+              <h1>System Compromised</h1>
+              <div className="end-rank-badge">
+                <span className="end-rank-label">Status</span>
+                <span className="end-rank-value">CRITICAL</span>
+              </div>
+            </div>
+            <div className="hacked-menu-body">
+              <p className="hacked-menu-message">
+                The intrusion was contained, but the inbox is in ruins.<br />
+                {wrongCount} security incidents recorded.
+              </p>
+
+              <div className="hacked-menu-stats">
+                <div>
+                  <p>Score</p>
+                  <h2>{score}</h2>
+                </div>
+                <div>
+                  <p>Correct</p>
+                  <h2>{correctCount}</h2>
+                </div>
+                <div>
+                  <p>Mistakes</p>
+                  <h2>{wrongCount}</h2>
+                </div>
+              </div>
+
+              <div className="end-actions hacked-menu-actions">
+                <button
+                  id="restart-btn"
+                  onClick={playAgain}
+                  type="button"
+                >
+                  ▶ Play Again
+                </button>
+                <button
+                  id="see-mistakes-btn"
+                  onClick={() => setScreen('mistakes')}
+                  type="button"
+                  disabled={mistakeEmails.length === 0}
+                >
+                  📋 See Your Mistakes
+                </button>
+                <button
+                  id="quit-btn"
+                  onClick={returnToLobby}
+                  type="button"
+                >
+                  ◀ Return to Lobby
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {screen === 'mistakes' && (
+        <section id="mistakes-screen" className="screen active laptop-pov outcome-screen">
+          <div className="laptop-bezel" aria-hidden="true">
+            <div className="laptop-bezel-top" />
+            <div className="laptop-bezel-left" />
+            <div className="laptop-bezel-right" />
+            <div className="laptop-bezel-bottom">
+              <div className="laptop-bezel-hinge" />
+            </div>
+            <div className="laptop-bezel-cam" />
+          </div>
+          <div className="end-card mistakes-card">
+            <div className="end-header">
+              <h1>Mistake Review</h1>
+              <div className="end-rank-badge">
+                <span className="end-rank-label">Total</span>
+                <span className="end-rank-value">{mistakeEmails.length}</span>
+              </div>
+            </div>
+            <div className="mistakes-body">
+              <p className="mistakes-intro">
+                Here is what each phishing attempt looked like — and why your call missed.
+              </p>
+              <div className="mistakes-list">
+                {mistakeEmails.map((email, i) => {
+                  const wasPhishing = email.type === 'phishing'
+                  const playerThought = wasPhishing ? 'LEGIT' : 'PHISHING'
+                  const actualLabel = wasPhishing ? 'PHISHING' : 'LEGIT'
+                  return (
+                    <div key={i} className="mistake-card">
+                      <div className="mistake-header">
+                        <span className="mistake-num">#{i + 1}</span>
+                        <span className={`mistake-tag ${wasPhishing ? 'tag-phish' : 'tag-legit'}`}>
+                          Actually: {actualLabel}
+                        </span>
+                      </div>
+                      <div className="mistake-meta">
+                        <div><strong>From:</strong> {email.from}</div>
+                        <div><strong>Subject:</strong> {email.subject}</div>
+                      </div>
+                      <div className="mistake-verdict">
+                        You treated it as <strong>{playerThought}</strong>.
+                      </div>
+                      {email.wrongFeedback && (
+                        <div className="mistake-feedback">
+                          ⚠ {email.wrongFeedback}
+                        </div>
+                      )}
+                      <div className="mistake-hint">
+                        💡 {email.hint}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="end-actions">
+                <button
+                  id="restart-btn"
+                  onClick={playAgain}
+                  type="button"
+                >
+                  ▶ Play Again
+                </button>
+                <button
+                  id="quit-btn"
+                  onClick={() => setScreen('hacked-menu')}
+                  type="button"
+                >
+                  ◀ Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {screen === 'end' && (
-        <section id="end-screen" className="screen active laptop-pov">
+        <section id="end-screen" className="screen active laptop-pov outcome-screen">
           <div className="laptop-bezel" aria-hidden="true">
             <div className="laptop-bezel-top" />
             <div className="laptop-bezel-left" />
@@ -1180,7 +1329,10 @@ function App () {
               </div>
             )}
 
-            <button id="restart-btn" onClick={resetGame}>Play Again</button>
+            <div className="end-actions">
+              <button id="restart-btn" onClick={playAgain}>Play Again</button>
+              <button id="quit-btn" onClick={returnToLobby}>Quit Game</button>
+            </div>
           </div>
         </section>
       )}
