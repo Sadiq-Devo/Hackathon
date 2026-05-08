@@ -146,7 +146,7 @@ function App () {
   const [mistakes, setMistakes] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
-  const [timer, setTimer] = useState(30)
+  const [timer, setTimer] = useState(45)
   const [feedback, setFeedback] = useState('Feedback visas här.')
   const [activePopups, setActivePopups] = useState<ActivePopup[]>([])
   const [comboBurst, setComboBurst] = useState(0)
@@ -261,7 +261,7 @@ function App () {
         }
 
         const next = current - 1
-        if (next <= 30) playTick()
+        if (next <= 10) playTick()
         return next
       })
     }, 1000)
@@ -410,7 +410,7 @@ function App () {
     setMistakes(0)
     setCorrectCount(0)
     setWrongCount(0)
-    setTimer(30)
+    setTimer(45)
     setActivePopups([])
     setComboBurst(0)
     setComboImage(randomItem(streakImages))
