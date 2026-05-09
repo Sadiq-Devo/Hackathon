@@ -25,16 +25,6 @@ import fishGif from './assets/effects/Fish.gif'
 import heartEmpty from './assets/effects/heart_empty.png'
 import heartFull from './assets/effects/heart_full.png'
 import losingScreen from './assets/effects/lost.png'
-import popup1 from './assets/effects/Popup1.jpg'
-import popup2 from './assets/effects/Popup2.gif'
-import popup3 from './assets/effects/Popup3.gif'
-import popup4 from './assets/effects/Popup4.png'
-import popup5 from './assets/effects/Popup5.jpeg'
-import popup6 from './assets/effects/Popup6.png'
-import popup7 from './assets/effects/Popup7.webp'
-import popup8 from './assets/effects/Popup8.jpeg'
-import popup9 from './assets/effects/Popup9.webp'
-import popup10 from './assets/effects/Popup10.jpg'
 import streak1 from './assets/effects/Streak1.png'
 import streak2 from './assets/effects/Streak2.png'
 import streak3 from './assets/effects/Streak3.png'
@@ -54,16 +44,16 @@ type ActivePopup = {
 }
 
 const popupImages = [
-  { image: popup1, alt: 'Suspicious popup 1' },
-  { image: popup2, alt: 'Suspicious popup 2' },
-  { image: popup3, alt: 'Suspicious popup 3' },
-  { image: popup4, alt: 'Suspicious popup 4' },
-  { image: popup5, alt: 'Suspicious popup 5' },
-  { image: popup6, alt: 'Suspicious popup 6' },
-  { image: popup7, alt: 'Suspicious popup 7' },
-  { image: popup8, alt: 'Suspicious popup 8' },
-  { image: popup9, alt: 'Suspicious popup 9' },
-  { image: popup10, alt: 'Suspicious popup 10' },
+  { image: '/effects/Popup1.jpg', alt: 'Suspicious popup 1' },
+  { image: '/effects/Popup2.gif', alt: 'Suspicious popup 2' },
+  { image: '/effects/Popup3.gif', alt: 'Suspicious popup 3' },
+  { image: '/effects/Popup4.png', alt: 'Suspicious popup 4' },
+  { image: '/effects/Popup5.jpeg', alt: 'Suspicious popup 5' },
+  { image: '/effects/Popup6.png', alt: 'Suspicious popup 6' },
+  { image: '/effects/Popup7.webp', alt: 'Suspicious popup 7' },
+  { image: '/effects/Popup8.jpeg', alt: 'Suspicious popup 8' },
+  { image: '/effects/Popup9.webp', alt: 'Suspicious popup 9' },
+  { image: '/effects/Popup10.jpg', alt: 'Suspicious popup 10' },
 ]
 
 const streakImages = [streak1, streak2, streak3, streak4, streak5]
