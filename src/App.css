@@ -1561,9 +1561,9 @@ button:disabled {
 }
 
 .annoyance-layer {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 20;
+  z-index: 10000;
   pointer-events: none;
   overflow: hidden;
 }
