@@ -503,6 +503,7 @@ function App () {
       )))
     }
   }
+  
 
   const startReply = () => {
     if (isPaused || !selectedEmail || selectedEmail.done) return
