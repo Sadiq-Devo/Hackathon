@@ -88,6 +88,7 @@ const streakSounds = [
 
 const popupDelays = [3000, 5000, 7000]
 const maxHearts = 3
+const GAME_DURATION_SECONDS = 120
 const SCORE_BAR_TARGET = 1000
 const INITIAL_INBOX_SIZE = 3
 const NEW_EMAIL_MIN_DELAY = 4000
@@ -154,7 +155,7 @@ function App () {
   const [mistakes, setMistakes] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
-  const [timer, setTimer] = useState(45)
+  const [timer, setTimer] = useState(GAME_DURATION_SECONDS)
   const [feedback, setFeedback] = useState('Feedback visas här.')
   const [activePopups, setActivePopups] = useState<ActivePopup[]>([])
   const [comboBurst, setComboBurst] = useState(0)
@@ -426,7 +427,7 @@ function App () {
     setMistakes(0)
     setCorrectCount(0)
     setWrongCount(0)
-    setTimer(45)
+    setTimer(GAME_DURATION_SECONDS)
     setActivePopups([])
     setComboBurst(0)
     setComboImage(randomItem(streakImages))

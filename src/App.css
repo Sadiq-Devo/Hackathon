@@ -5007,6 +5007,7 @@ button:disabled {
   padding: 8px 14px 4px !important;
   margin: 0 !important;
   font-size: 12px !important;
+  background: transparent !important;
   color: #000000 !important;
   font-style: italic !important;
   text-align: center !important;
