@@ -202,6 +202,16 @@ function App () {
     })
   }, [])
 
+  useEffect(() => {
+    console.log('[popup-debug] render snapshot', {
+      screen,
+      mistakes,
+      isPaused,
+      activePopupsCount: activePopups.length,
+      activePopups,
+    })
+  }, [screen, mistakes, isPaused, activePopups])
+
   const startGameplayMusic = useCallback((force = false) => {
     if (!force && !musicOn) return
 
@@ -354,7 +364,9 @@ function App () {
         if (current.length >= popupImages.length) return current
 
         playSound(popSound, 0.42)
-        return [...current, createPopup()]
+        const next = createPopup()
+        console.log('[popup-debug] scheduled popup spawn', { delay, next, currentCount: current.length })
+        return [...current, next]
       })
     }, delay)
 
@@ -566,7 +578,9 @@ function App () {
       }, 2400)
     } else if (nextMistakes === 1) {
       playSound(popSound, 0.42)
-      setActivePopups([createPopup()])
+      const first = createPopup()
+      console.log('[popup-debug] first popup spawn on mistake', first)
+      setActivePopups([first])
     }
   }
 
@@ -1000,13 +1014,16 @@ function App () {
           </div>
 
           {mistakes >= 1 && (
-            <div className="annoyance-layer" aria-live="polite">
+            <div className="annoyance-layer" aria-live="polite" data-popup-count={activePopups.length}>
               {mistakes >= 2 && <div className="glitch-overlay" aria-hidden="true" />}
               <img className="swimming-fish" src={fishGif} alt="Animated phishing fish" />
               {activePopups.map((popup) => (
                 <div
                   className="ad-popup"
                   key={popup.id}
+                  data-popup-id={popup.id}
+                  data-popup-top={popup.top}
+                  data-popup-left={popup.left}
                   style={{
                     top: `${popup.top}%`,
                     left: `${popup.left}%`,
