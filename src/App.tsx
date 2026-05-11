@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { emailTemplates, type Email, type EmailType } from './data/emailTemplates'
 import { employees, type Employee } from './data/employees'
 import { generateAiEmail, pickFallbackEmail } from './services/aiEmailGenerator'
+import { fetchTopScores, submitScore, type LeaderboardEntry, type LeaderboardYou } from './services/leaderboard'
 import { MenuScene } from './menu/MenuScene'
 import './App.css'
 import backgroundMusic from './assets/audio/BackgroundMusic.mp3'
@@ -170,9 +171,10 @@ function App () {
   const [replyDraft, setReplyDraft] = useState('')
   const [playerName, setPlayerName] = useState('')
   const [scoreSaved, setScoreSaved] = useState(false)
-  const [leaderboard, setLeaderboard] = useState<{ name: string; score: number }[]>(
-    () => JSON.parse(localStorage.getItem('leaderboard') ?? '[]')
-  )
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [leaderboardYou, setLeaderboardYou] = useState<LeaderboardYou | null>(null)
+  const [leaderboardError, setLeaderboardError] = useState<string | null>(null)
+  const [isSavingScore, setIsSavingScore] = useState(false)
   const [musicOn, setMusicOn] = useState(true)
   const [hasShownFirstActionPulse, setHasShownFirstActionPulse] = useState(false)
   const [showFirstActionPulse, setShowFirstActionPulse] = useState(false)
@@ -201,6 +203,14 @@ function App () {
       image.decoding = 'async'
       image.src = src
     })
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    fetchTopScores()
+      .then((top) => { if (!cancelled) setLeaderboard(top) })
+      .catch(() => { if (!cancelled) setLeaderboardError('Could not load global leaderboard.') })
+    return () => { cancelled = true }
   }, [])
 
   const startGameplayMusic = useCallback((force = false) => {
@@ -576,13 +586,22 @@ function App () {
     handleDecision('legit')
   }
 
-  const handleSaveScore = () => {
-    if (!playerName.trim()) return
-    const updated = [...leaderboard, { name: playerName.trim(), score }]
-    setLeaderboard(updated)
-    localStorage.setItem('leaderboard', JSON.stringify(updated))
-    setPlayerName('')
-    setScoreSaved(true)
+  const handleSaveScore = async () => {
+    const name = playerName.trim()
+    if (!name || isSavingScore) return
+    setIsSavingScore(true)
+    setLeaderboardError(null)
+    try {
+      const result = await submitScore(name, score)
+      setLeaderboard(result.top)
+      setLeaderboardYou(result.you ?? null)
+      setPlayerName('')
+      setScoreSaved(true)
+    } catch {
+      setLeaderboardError('Could not save score. Try again.')
+    } finally {
+      setIsSavingScore(false)
+    }
   }
 
   const renderBodyWithLink = (email: Email) => {
@@ -1311,13 +1330,14 @@ function App () {
                     onKeyDown={(e) => e.key === 'Enter' && handleSaveScore()}
                     placeholder="Your name..."
                     maxLength={20}
+                    disabled={isSavingScore}
                   />
                   <button
                     className="end-save-btn"
                     onClick={handleSaveScore}
-                    disabled={!playerName.trim()}
+                    disabled={!playerName.trim() || isSavingScore}
                   >
-                    Save
+                    {isSavingScore ? 'Saving...' : 'Save'}
                   </button>
                 </div>
               </div>
@@ -1327,22 +1347,43 @@ function App () {
               </div>
             )}
 
+            {leaderboardError && (
+              <div className="end-leaderboard-error">{leaderboardError}</div>
+            )}
+
             {leaderboard.length > 0 && (
               <div className="end-leaderboard">
-                <h3>Leaderboard</h3>
+                <h3>Global Leaderboard</h3>
                 <div className="leaderboard-list">
-                  {[...leaderboard]
-                    .sort((a, b) => b.score - a.score)
-                    .slice(0, 10)
-                    .map((player, index) => (
-                      <div className={`leaderboard-row ${index < 3 ? `top-${index + 1}` : ''}`} key={index}>
+                  {leaderboard.slice(0, 5).map((player, index) => {
+                    const isYou = leaderboardYou?.id === player.id || (scoreSaved && !leaderboardYou && index === 0)
+                    return (
+                      <div
+                        className={`leaderboard-row ${index < 3 ? `top-${index + 1}` : ''} ${isYou ? 'is-you' : ''}`}
+                        key={player.id}
+                      >
                         <span className="lb-rank">
                           {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                         </span>
                         <span className="lb-name">{player.name}</span>
                         <span className="lb-score">{player.score}</span>
                       </div>
-                    ))}
+                    )
+                  })}
+                  {leaderboardYou && (
+                    <>
+                      <div className="leaderboard-row leaderboard-gap" aria-hidden="true">
+                        <span className="lb-rank">…</span>
+                        <span className="lb-name" />
+                        <span className="lb-score" />
+                      </div>
+                      <div className="leaderboard-row is-you" key={leaderboardYou.id}>
+                        <span className="lb-rank">#{leaderboardYou.rank}</span>
+                        <span className="lb-name">{leaderboardYou.name}</span>
+                        <span className="lb-score">{leaderboardYou.score}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}

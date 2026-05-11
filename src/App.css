@@ -5133,6 +5133,29 @@ button:disabled {
 #end-screen .leaderboard-row.top-1 { background: linear-gradient(to right, #fef3c7, transparent) !important; font-weight: bold !important; }
 #end-screen .leaderboard-row.top-2 { background: linear-gradient(to right, #f1f5f9, transparent) !important; }
 #end-screen .leaderboard-row.top-3 { background: linear-gradient(to right, #fef0e6, transparent) !important; }
+#end-screen .leaderboard-row.is-you {
+  background: linear-gradient(to right, #c7e0ff, transparent) !important;
+  font-weight: bold !important;
+  outline: 1px solid #000080 !important;
+}
+#end-screen .leaderboard-row.leaderboard-gap {
+  color: #888 !important;
+  text-align: center !important;
+  border-bottom: none !important;
+  padding: 2px 8px !important;
+}
+#end-screen .leaderboard-row.leaderboard-gap .lb-rank {
+  color: #888 !important;
+  font-weight: normal !important;
+}
+#end-screen .end-leaderboard-error {
+  padding: 6px 14px !important;
+  margin: 4px 0 !important;
+  font-size: 11px !important;
+  color: #7f1d1d !important;
+  text-align: center !important;
+  font-family: 'Courier New', monospace !important;
+}
 
 #end-screen .lb-rank {
   font-size: 14px !important;
