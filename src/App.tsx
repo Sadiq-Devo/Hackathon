@@ -202,16 +202,6 @@ function App () {
     })
   }, [])
 
-  useEffect(() => {
-    console.log('[popup-debug] render snapshot', {
-      screen,
-      mistakes,
-      isPaused,
-      activePopupsCount: activePopups.length,
-      activePopups,
-    })
-  }, [screen, mistakes, isPaused, activePopups])
-
   const startGameplayMusic = useCallback((force = false) => {
     if (!force && !musicOn) return
 
@@ -364,9 +354,7 @@ function App () {
         if (current.length >= popupImages.length) return current
 
         playSound(popSound, 0.42)
-        const next = createPopup()
-        console.log('[popup-debug] scheduled popup spawn', { delay, next, currentCount: current.length })
-        return [...current, next]
+        return [...current, createPopup()]
       })
     }, delay)
 
@@ -578,9 +566,7 @@ function App () {
       }, 2400)
     } else if (nextMistakes === 1) {
       playSound(popSound, 0.42)
-      const first = createPopup()
-      console.log('[popup-debug] first popup spawn on mistake', first)
-      setActivePopups([first])
+      setActivePopups([createPopup()])
     }
   }
 
@@ -1014,23 +1000,20 @@ function App () {
           </div>
 
           {mistakes >= 1 && (
-            <div className="annoyance-layer" aria-live="polite" data-popup-count={activePopups.length}>
+            <div className="annoyance-layer" aria-live="polite">
               {mistakes >= 2 && <div className="glitch-overlay" aria-hidden="true" />}
               <img className="swimming-fish" src={fishGif} alt="Animated phishing fish" />
               {activePopups.map((popup) => (
                 <div
-                  className="ad-popup"
+                  className="fake-alert"
                   key={popup.id}
-                  data-popup-id={popup.id}
-                  data-popup-top={popup.top}
-                  data-popup-left={popup.left}
                   style={{
                     top: `${popup.top}%`,
                     left: `${popup.left}%`,
                     transform: `rotate(${popup.rotation}deg)`,
                   }}
                 >
-                  <div className="ad-popup-title">
+                  <div className="fake-alert-title">
                     <span>System Alert</span>
                     <button type="button" aria-label="Close popup" onClick={() => closePopup(popup.id)}>x</button>
                   </div>
