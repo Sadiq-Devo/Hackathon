@@ -8,7 +8,7 @@ The whole experience is wrapped in a 90s aesthetic: a 3D scene of a laptop on a 
 
 ```bash
 npm install
-cp .env.local.example .env.local   # then fill in your OpenRouter key
+cp .env.local.example .env.local   # then fill in your OpenRouter + Supabase keys
 npm run dev
 ```
 
@@ -41,7 +41,7 @@ The dev server prints a local URL (typically `http://localhost:5173`).
 - **AI-generated emails** — every fresh email after the initial inbox is generated on the fly via OpenRouter (Llama 3.3 70B by default) using a strict JSON schema. Emails impersonate real members of the Nexus Solutions org chart, with Swedish hints and dry-humor wrong-answer feedback. If the API call fails it gracefully falls back to a curated email template.
 - **Streak feedback** — random celebration sound (Cash, Great, Holy Cow, Legendary, Phenomenal, Splendid, Wow, Oh Yeah) and a streak burst image when you chain correct answers.
 - **Mistake review** — every wrong email is collected into a Win98 list. Each card shows the actual classification, what you treated it as, the `wrongFeedback` callout, and the educational `hint`.
-- **Persistent leaderboard** — saves to `localStorage` under the `leaderboard` key. Top 10 are shown with gold/silver/bronze gradients on rank 1-3.
+- **Global leaderboard** — saves scores to Supabase and shows the top players with gold/silver/bronze gradients on rank 1-3.
 
 ## Tech stack
 
@@ -53,6 +53,7 @@ The dev server prints a local URL (typically `http://localhost:5173`).
 | `remotion` | `interpolate` + easing for the camera zoom animation |
 | Web Audio API | Synthesized boot chime |
 | OpenRouter API | AI email generation (Llama 3.3 70B by default, model is configurable) |
+| Supabase | Hosted database for the global leaderboard |
 
 ## Environment variables
 
@@ -62,8 +63,28 @@ Copy `.env.local.example` to `.env.local` and fill in:
 |---|---|---|
 | `VITE_OPENROUTER_API_KEY` | Your OpenRouter API key (get one at [openrouter.ai/keys](https://openrouter.ai/keys)) | AI generation disabled, falls back to curated templates |
 | `VITE_OPENROUTER_MODEL` | OpenRouter model slug | `meta-llama/llama-3.3-70b-instruct:free` |
+| `VITE_SUPABASE_URL` | Supabase project URL | Leaderboard requests fail |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public API key | Leaderboard requests fail |
 
 `.env.local` is in `.gitignore` — never commit it. If you ever paste a key into a tracked file by mistake, rotate it on OpenRouter immediately.
+
+## Database
+
+The global leaderboard uses Supabase with a `leaderboard` table:
+
+```sql
+create table public.leaderboard (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(name) <= 20),
+  score integer not null check (score >= 0 and score <= 99999),
+  created_at timestamptz not null default now()
+);
+
+create index leaderboard_score_created_at_idx
+  on public.leaderboard (score desc, created_at asc);
+```
+
+Enable insert/select access for the anon key according to your Supabase Row Level Security policy. The app reads `id`, `name`, and `score`, orders by `score` descending then `created_at` ascending, and inserts new score rows.
 
 ## Project structure
 
@@ -76,6 +97,7 @@ src/
     employees.ts          - Nexus Solutions org chart (CEO, CTO, CFO, etc.)
   services/
     aiEmailGenerator.ts   - OpenRouter client + JSON schema validation + fallback
+    leaderboard.ts        - Supabase leaderboard client
   menu/
     MenuScene.tsx         - R3F Canvas, lighting, camera rig, zoom animation
     Laptop.tsx            - laptop geometry + Html portal (BIOS / Win98 menu / Win98 leaderboard)
